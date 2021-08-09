@@ -1,0 +1,5 @@
+@windicss;
+
+.box {
+    @apply max-w-xl mx-auto bg-white shadow-xl rounded-xl;
+}
