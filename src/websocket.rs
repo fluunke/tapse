@@ -23,7 +23,7 @@ pub enum WSEvent {
     Error(String),
 }
 
-pub fn make_ws(mut app: tide::Server<State>) -> tide::Server<State> {
+pub fn make_ws(mut app: tide::Route<State>) -> tide::Route<State> {
     app.at("/ws")
         .get(WebSocket::new(|req: Request<State>, stream| async move {
             let session: Session = req.session().get("user").unwrap_or_default();

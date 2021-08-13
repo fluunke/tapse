@@ -28,7 +28,9 @@
     $: fetch_files($current_room).then((x) => (files = x));
 
     function insert_file(f: Array<File>): Array<File> {
-        return f.concat(files);
+        if ($current_room === f[0].room) {
+            return f.concat(files);
+        }
     }
 
     async function delete_file(file: File) {
@@ -82,6 +84,17 @@
             {files.length} file{show_files.length == 1 ? "" : "s"} in this room
         {/if}
     </div>
+
+    <input
+        class="block p-2 mx-auto mb-2 border border-0 rounded-lg shadow-md"
+        type="search"
+        bind:value={file_search}
+        on:input={() => {
+            current_page = 0;
+        }}
+        placeholder="Search for files"
+    />
+
     <div>
         {#if show_files.length == 0}
             <div class="font-bold text-center text-gray-400 pb-7 text-l">
@@ -89,7 +102,7 @@
             </div>
         {/if}
         <div
-            class="overflow-x-hidden overflow-y-scroll max-h-72 h-72 w-80 divide-y divide-gray-100"
+            class="overflow-x-hidden overflow-y-scroll divide-y divide-gray-100 max-h-72 h-72 w-80"
         >
             {#each show_files as file, index}
                 {#if index < files_per_page * (current_page + 1) && index >= files_per_page * current_page}
@@ -142,20 +155,11 @@
             </div>
         </div>
 
-        <input
-            class="block p-2 mx-auto mb-2 border border-0 rounded-lg shadow-md"
-            type="search"
-            bind:value={file_search}
-            on:input={() => {
-                current_page = 0;
-            }}
-            placeholder="Search for files"
-        />
-        <div class="max-w-md pb-2 mx-auto text-center">
+        <div class="p-2 text-center">
             <form
                 id="fileUpload"
                 name="fileUpload"
-                class="pb-3 flex flex-row items-center"
+                class="flex flex-row items-center pb-3"
             >
                 <input type="file" multiple required name="file" />
                 <button

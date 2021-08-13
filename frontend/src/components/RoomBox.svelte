@@ -7,7 +7,6 @@
     import { slide } from "svelte/transition";
 
     import { MenuIcon, PlusSquareIcon } from "svelte-feather-icons";
-    import { get } from "svelte/store";
 
     let rooms: Array<Room> = [];
     let room_name: string = "";
@@ -55,8 +54,7 @@
                     set_current_room(room.id);
                 }}
             >
-                <i class="mr-1 align-middle ph-dots-nine" />
-                <div href="/?room={room.name}" class="inline-block">
+                <div href="/?room={room.name}" class="flex items-center">
                     <MenuIcon class="inline" size="16" />
                     {#if $current_room == room.id}
                         <div class="inline-block text-sm font-bold">

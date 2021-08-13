@@ -19,6 +19,8 @@ pub enum TapseError {
     RoomNameTooLong,
     #[error("There was an error while creating the room: {0}")]
     RoomCreationError(sqlx::Error),
+    #[error("Wrong password.")]
+    WrongPassword,
     #[error("Database error. If this problem persists, contact the administrator.\nError: {0}")]
     DatabaseError(sqlx::Error),
 }

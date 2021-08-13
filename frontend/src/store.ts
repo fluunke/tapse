@@ -3,7 +3,7 @@ import type Message from './Models.svelte';
 
 const messageStore = writable('');
 
-let socket = new WebSocket("ws://" + window.location.host + "/ws");
+let socket = new WebSocket("ws://" + window.location.host + "/api/ws");
 // const socket = new WebSocket('ws://' + window.location.host + '/ws');
 
 // Connection opened
@@ -17,22 +17,30 @@ socket.addEventListener('message', function (event) {
 });
 
 export var username = writable("Anonymous");
+export var login_modal = writable(false);
 
-export async function get_username() {
+export async function get_session() {
     let res = await fetch(`/api/session`);
+
+    let status = await res.status;
+
+    if (status == 401) {
+        login_modal.set(true)
+    }
 
     let data = await res.json();
 
     username.set(data.username);
 }
 
-get_username();
+get_session();
 
 
-export async function set_username(new_name: string) {
+export async function set_session(new_name: string, password: string) {
     let res = await fetch(`/api/session`, {
         body: JSON.stringify({
             username: new_name,
+            password,
         }),
         method: "POST",
         credentials: "include",
@@ -56,7 +64,7 @@ export function set_current_room(room: number) {
 
 export default {
     username,
-    set_username,
+    set_username: set_session,
     current_room,
     current_page,
     set_current_room,
