@@ -4,6 +4,13 @@ module.exports = {
     public: "/",
     src: "/dist",
   },
+
+  optimize: {
+    bundle: true,
+    minify: true,
+    target: 'es2018',
+  },
+
   plugins: [
     "@snowpack/plugin-svelte",
     "@snowpack/plugin-postcss",
