@@ -45,15 +45,17 @@ pub struct State {
 use clap::Clap;
 
 #[derive(Clap)]
+/// Tapse - Realtime chat and file sharing
 struct Opts {
     #[clap(short, long, default_value = "8080")]
     port: u16,
     #[clap(short, long, default_value = "127.0.0.1")]
     interface: IpAddr,
-    #[clap(short, long, default_value = "./tapse.db")]
+    #[clap(long, default_value = "./tapse.db")]
     /// Path to the database file
     db: PathBuf,
     #[clap(long)]
+    /// Optional
     password: Option<String>,
 }
 
