@@ -14,9 +14,13 @@ use handlers::{
 use http_types::headers::HeaderValue;
 use rust_embed::RustEmbed;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
-use std::{env, sync::Arc};
+use std::{
+    net::{IpAddr, SocketAddr},
+    path::PathBuf,
+    pin::Pin,
+    sync::Arc,
+};
 use tide::{
-    log::warn,
     security::{CorsMiddleware, Origin},
     sessions::{self},
 };
@@ -32,16 +36,26 @@ struct Frontend;
 pub struct State {
     pool: Arc<SqlitePool>,
     broadcaster: BroadcastChannel<WSEvent>,
+use clap::Clap;
+
+#[derive(Clap)]
+struct Opts {
+    #[clap(short, long, default_value = "8080")]
+    port: u16,
+    #[clap(short, long, default_value = "127.0.0.1")]
+    interface: IpAddr,
+    #[clap(short, long, default_value = "./tapse.db")]
+    /// Path to the database file
+    db: PathBuf,
+    #[clap(long)]
+    password: Option<String>,
 }
 
 #[async_std::main]
 async fn main() -> Result<(), sqlx::Error> {
     tide::log::start();
 
-    let server_url = env::var("SERVER_URL").unwrap_or_else(|_| {
-        warn!("SERVER_URL not set, using default: 127.0.0.1:8080");
-        "127.0.0.1:8080".into()
-    });
+    let opts: Opts = Opts::parse();
 
     // Channel shared between state to send and receive websocket messages.
     let broadcaster = BroadcastChannel::new();
@@ -51,8 +65,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .allow_origin(Origin::from("*"))
         .allow_credentials(true);
 
-    let db_url =
-        env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://tapse.db?mode=rwc".to_string());
+    let db_url = format!(
+        "sqlite://{}?mode=rwc",
+        opts.db.to_str().expect("Invalid database path!")
+    );
 
     let db = SqlitePoolOptions::new()
         .max_connections(16)
@@ -65,6 +81,7 @@ async fn main() -> Result<(), sqlx::Error> {
         State {
             pool: Arc::new(db),
             broadcaster,
+            password: opts.password,
         }
     });
 
@@ -102,7 +119,8 @@ async fn main() -> Result<(), sqlx::Error> {
     let mut app = crate::websocket::make_ws(app);
 
     app.with(cors);
+    let addr: SocketAddr = SocketAddr::new(opts.interface, opts.port);
 
-    app.listen(&server_url).await?;
+    app.listen(addr).await?;
     Ok(())
 }
