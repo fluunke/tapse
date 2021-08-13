@@ -19,17 +19,6 @@
         messages = x;
     });
 
-    let page: number = 0;
-    let files_per_page = 10;
-
-    // File search
-    $: show_files = files.filter((file) =>
-        file.name.toLowerCase().includes(file_search.toLowerCase())
-    );
-
-    // Calculate amount of pages
-    $: pages = Math.ceil(show_files.length / files_per_page) - 1;
-
     async function send_message(input: string) {
         let message = {
             room: $current_room,

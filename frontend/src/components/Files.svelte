@@ -27,10 +27,12 @@
     // Fetch files on room change
     $: fetch_files($current_room).then((x) => (files = x));
 
-    function insert_file(files: Array<File>) {
-        files.forEach((f) => {
-            files = [...files, f];
-        });
+    function insert_file(f: Array<File>): Array<File> {
+        return files.concat(f);
+
+        // files.forEach((f) => {
+        //     [...files, f];
+        // });
     }
 
     async function delete_file(file: File) {
@@ -59,7 +61,7 @@
             if (is_files(socketJSON)) {
                 console.log("should_adda");
                 let newfiles: Array<File> = socketJSON.new_files;
-                insert_file(newfiles);
+                files = insert_file(newfiles);
             }
         });
     });
@@ -84,13 +86,15 @@
             {files.length} file{show_files.length == 1 ? "" : "s"} in this room
         {/if}
     </div>
-    <div class="divide-y divide-gray-100">
+    <div>
         {#if show_files.length == 0}
             <div class="font-bold text-center text-gray-400 pb-7 text-l">
                 No files.
             </div>
         {/if}
-        <div class="overflow-x-hidden overflow-y-scroll max-h-72 h-72 w-80">
+        <div
+            class="overflow-x-hidden overflow-y-scroll max-h-72 h-72 w-80 divide-y divide-gray-100"
+        >
             {#each show_files as file, index}
                 {#if index < files_per_page * (current_page + 1) && index >= files_per_page * current_page}
                     <SingleFile {delete_file} {file} />
@@ -152,7 +156,11 @@
             placeholder="Search for files"
         />
         <div class="max-w-md pb-2 mx-auto text-center">
-            <form id="fileUpload" name="fileUpload" class="pb-3">
+            <form
+                id="fileUpload"
+                name="fileUpload"
+                class="pb-3 flex flex-row items-center"
+            >
                 <input type="file" multiple required name="file" />
                 <button
                     on:click|preventDefault={() => {
