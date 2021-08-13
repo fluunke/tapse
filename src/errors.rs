@@ -7,6 +7,8 @@ pub enum TapseError {
     NoFiles,
     #[error("Invalid filename.")]
     FileName,
+    #[error("File is empty.")]
+    FileEmpty,
     #[error("Message too short.")]
     MessageTooShort,
     #[error("Message too long.")]

@@ -35,6 +35,11 @@ pub async fn insert(
 
         let bytes = field.bytes().await.unwrap().to_vec();
 
+        // Disallow empty files
+        if bytes.is_empty() {
+            return Err(TapseError::FileEmpty);
+        }
+
         new_files.push(sqlx::query_as!(
             File,
             r#"insert into files (id, name, room, file, upload_date) values ($1, $2, $3, $4, datetime('now')) returning id as "id!: String", name as "name!: String", upload_date as "upload_date!: NaiveDateTime", room as "room!: i64""#,

@@ -28,11 +28,7 @@
     $: fetch_files($current_room).then((x) => (files = x));
 
     function insert_file(f: Array<File>): Array<File> {
-        return files.concat(f);
-
-        // files.forEach((f) => {
-        //     [...files, f];
-        // });
+        return f.concat(files);
     }
 
     async function delete_file(file: File) {
