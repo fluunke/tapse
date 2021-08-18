@@ -14,7 +14,9 @@ pub async fn add(pool: &SqlitePool, room: String) -> Result<Room, TapseError> {
 
     match sqlx::query_as!(
         Room,
-        r#"insert into rooms (name, creation_date) values ($1, datetime('now')) returning id as "id!: i64", name as "name!: String", creation_date as "creation_date!: NaiveDateTime"
+        r#"
+        insert into rooms (name, creation_date)
+        values ($1, datetime('now')) returning id as "id!: i64", name as "name!: String", creation_date as "creation_date!: NaiveDateTime"
     "#, room
     )
     .fetch_one(pool)
@@ -25,9 +27,13 @@ pub async fn add(pool: &SqlitePool, room: String) -> Result<Room, TapseError> {
 }
 
 pub async fn list(pool: &SqlitePool) -> Result<Vec<Room>, TapseError> {
-    let rooms = sqlx::query_as!(Room, "select id, name, creation_date from rooms")
-        .fetch_all(pool)
-        .await?;
+    let rooms = sqlx::query_as!(
+        Room,
+        r#"
+        select id, name, creation_date from rooms"#
+    )
+    .fetch_all(pool)
+    .await?;
 
     Ok(rooms)
 }

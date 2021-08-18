@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import store, { current_room } from "../store.js";
-    import { is_files } from "../Models.svelte";
-    import type { File } from "../Models.svelte";
+    import { current_room } from "../stores/room";
+    import type { TFile } from "../Models.svelte";
     import SingleFile from "./files/SingleFile.svelte";
+
+    import { files, searched_files, search } from "../stores/file";
 
     import {
         ChevronLeftIcon,
@@ -12,57 +12,34 @@
         ChevronsRightIcon,
     } from "svelte-feather-icons";
 
-    let files: Array<File> = [];
     let file_search: string = "";
     let files_per_page = 10;
     let current_page = 0;
-    // Calculate amount of pages
-    $: pages = Math.ceil(show_files.length / files_per_page) - 1;
 
-    // File search
-    $: show_files = files.filter((file) =>
-        file.name.toLowerCase().includes(file_search.toLowerCase())
-    );
+    $: {
+        search.set(file_search);
+    }
+
+    // Calculate amount of pages
+    $: pages = Math.ceil($searched_files.length / files_per_page) - 1;
 
     // Fetch files on room change
-    $: fetch_files($current_room).then((x) => (files = x));
+    $: fetch_files($current_room).then((f) => files.set(f));
 
-    function insert_file(f: Array<File>): Array<File> {
-        if ($current_room === f[0].room) {
-            return f.concat(files);
+    async function delete_file(f: TFile) {
+        let res = await fetch(`/api/files/${f.id}/${f.name}`, {
+            method: "DELETE",
+        });
+
+        if (res.ok) {
+            files.set($files.filter((x) => x !== f));
         }
     }
 
-    async function delete_file(file: File) {
-        files = files.filter((x) => x !== file);
-
-        await fetch(`/api/files/${file.id}/${file.name}`, {
-            method: "DELETE",
-        });
-    }
-
-    async function fetch_files(room: number): Promise<Array<File>> {
+    async function fetch_files(room: number): Promise<Array<TFile>> {
         const file_response = await fetch(`/api/files?room=${room}`);
         return file_response.json();
     }
-
-    onMount(async () => {
-        files = await fetch_files($current_room);
-
-        store.websocket_subscribe((socketMessage) => {
-            let socketJSON: any = {};
-
-            try {
-                socketJSON = JSON.parse(socketMessage);
-            } catch {}
-
-            if (is_files(socketJSON)) {
-                console.log("should_adda");
-                let newfiles: Array<File> = socketJSON.new_files;
-                files = insert_file(newfiles);
-            }
-        });
-    });
 
     async function send_file() {
         let fileForm = document.getElementById("fileUpload");
@@ -75,13 +52,16 @@
     }
 </script>
 
-<div class="shadow-xl w-80">
+<div class="shadow-xl w-80, rounded-md">
     <div class="p-1 font-bold text-center">
         {#if file_search.length > 0}
-            {show_files.length} file{show_files.length == 1 ? "" : "s"} out of
-            {files.length}:
+            {$searched_files.length} file{$searched_files.length == 1
+                ? ""
+                : "s"} out of
+            {$files.length}:
         {:else}
-            {files.length} file{show_files.length == 1 ? "" : "s"} in this room
+            {$files.length} file{$searched_files.length == 1 ? "" : "s"} in this
+            room
         {/if}
     </div>
 
@@ -96,7 +76,7 @@
     />
 
     <div>
-        {#if show_files.length == 0}
+        {#if $searched_files.length == 0}
             <div class="font-bold text-center text-gray-400 pb-7 text-l">
                 No files.
             </div>
@@ -104,7 +84,7 @@
         <div
             class="overflow-x-hidden overflow-y-scroll divide-y divide-gray-100 max-h-72 h-72 w-80"
         >
-            {#each show_files as file, index}
+            {#each $searched_files as file, index}
                 {#if index < files_per_page * (current_page + 1) && index >= files_per_page * current_page}
                     <SingleFile {delete_file} {file} />
                 {/if}
@@ -132,7 +112,7 @@
                 </div>
                 <div class="px-2">
                     Page {current_page + 1} out of {Math.ceil(
-                        show_files.length / files_per_page
+                        $searched_files.length / files_per_page
                     )}
                 </div>
 
@@ -159,7 +139,7 @@
             <form
                 id="fileUpload"
                 name="fileUpload"
-                class="flex flex-row items-center pb-3"
+                class="flex flex-col items-center pb-3"
             >
                 <input type="file" multiple required name="file" />
                 <button

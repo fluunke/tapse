@@ -18,9 +18,9 @@ pub async fn add(
 
     Ok(sqlx::query_as!(
             Message,
-        r#"INSERT INTO messages(room, author, content, creation_date)
-        VALUES ($1, $2, $3, datetime('now'))
-        RETURNING id as "id!: i64", content as "content!: String", creation_date as "creation_date!: NaiveDateTime", room as "room!: i64", author as "author!: String""#,
+        r#"insert into messages(room, author, content, creation_date)
+        values ($1, $2, $3, datetime('now'))
+        returning id as "id!: i64", content as "content!: String", creation_date as "creation_date!: NaiveDateTime", room as "room!: i64", author as "author!: String""#,
             message.room,
             author,
             message.content
@@ -32,10 +32,10 @@ pub async fn add(
 pub async fn list(pool: &SqlitePool, room: &str, amount: i64) -> Result<Vec<Message>, TapseError> {
     match sqlx::query_as!(
         Message,
-        "SELECT * FROM (SELECT id, author, room, content, creation_date FROM messages
-         WHERE room = $1
-         ORDER BY creation_date DESC LIMIT $2)
-         AS x ORDER BY creation_date ASC",
+        "select * from (select id, author, room, content, creation_date from messages
+         where room = $1
+         order by creation_date desc limit $2)
+         as x order by creation_date asc",
         room,
         amount
     )

@@ -2,10 +2,10 @@
     import { Trash2Icon } from "svelte-feather-icons";
 
     import { slide } from "svelte/transition";
-    import type { File } from "../../Models.svelte";
-    export var file: File;
+    import type { TFile } from "../../Models.svelte";
+    export var file: TFile;
 
-    export var delete_file = (file: File) => {};
+    export var delete_file = (file: TFile) => {};
 </script>
 
 <div
@@ -23,7 +23,7 @@
             on:click={() => {
                 delete_file(file);
             }}
-            class="p-1 border rounded-sm"
+            class="p-1 border rounded-sm flex"
         >
             <Trash2Icon size="12" />
         </div>

@@ -44,12 +44,6 @@ pub struct WSError {
     pub error: String,
 }
 
-/// JSON Query to create a new room
-#[derive(Deserialize, Serialize)]
-pub struct RoomQuery {
-    pub room: String,
-}
-
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Session {
     pub username: String,

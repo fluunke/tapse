@@ -9,7 +9,7 @@ tide = "0.16"
 tide-websockets = "0.4"
 multer = {version = "2.0"}
 broadcaster = "1.0"
-http-types = "2.11"
+http-types = "2.12"
 
 sanitize-filename = "0.3"
 rust-embed = "6.0"

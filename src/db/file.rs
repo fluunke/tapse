@@ -42,7 +42,9 @@ pub async fn insert(
 
         new_files.push(sqlx::query_as!(
             File,
-            r#"insert into files (id, name, room, file, upload_date) values ($1, $2, $3, $4, datetime('now')) returning id as "id!: String", name as "name!: String", upload_date as "upload_date!: NaiveDateTime", room as "room!: i64""#,
+            r#"
+            insert into files (id, name, room, file, upload_date)
+            values ($1, $2, $3, $4, datetime('now')) returning id as "id!: String", name as "name!: String", upload_date as "upload_date!: NaiveDateTime", room as "room!: i64""#,
             id,
             filename,
             room,

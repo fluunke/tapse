@@ -1,18 +1,14 @@
 <script lang="typescript">
-    import { fetch_rooms } from "../Models.svelte";
-    import type { Room } from "../Models.svelte";
-    import { is_room } from "../Models.svelte";
-    import store, { current_room, set_current_room } from "../store";
-    import { onMount } from "svelte";
+    import { rooms } from "../stores/room";
     import { slide } from "svelte/transition";
+    import { current_room } from "../stores/room";
 
     import { MenuIcon, PlusSquareIcon } from "svelte-feather-icons";
 
-    let rooms: Array<Room> = [];
     let room_name: string = "";
     let add_room_shown: boolean = false;
 
-    function new_room() {
+    function create_room() {
         fetch(`/api/rooms`, {
             method: "POST",
             body: JSON.stringify({ room: room_name }),
@@ -22,36 +18,16 @@
         room_name = "";
         add_room_shown = false;
     }
-
-    function insert_room(room: Room) {
-        rooms = [...rooms, room];
-    }
-    // Subscribe to rooms
-    onMount(async function () {
-        rooms = await fetch_rooms();
-
-        store.websocket_subscribe((socketMessage) => {
-            let socketJSON: any = {};
-            try {
-                socketJSON = JSON.parse(socketMessage);
-            } catch {}
-
-            if (is_room(socketJSON)) {
-                let newRoom: Room = socketJSON.new_room;
-                insert_room(newRoom);
-            }
-        });
-    });
 </script>
 
 <div id="room_box" class="max-w-md mx-auto text-center">
     <h2 class="text-lg font-bold">Rooms</h2>
     <div class="mb-1">
-        {#each rooms as room}
+        {#each $rooms as room}
             <div
-                class="inline-block px-2 py-1 transition-all rounded cursor-pointer hover:opacity-60 hover:bg-gray-200"
+                class="inline-block px-2 mb-2 py-1 transition-all rounded cursor-pointer hover:opacity-60 hover:bg-gray-200"
                 on:click={() => {
-                    set_current_room(room.id);
+                    current_room.set(room.id);
                 }}
             >
                 <div href="/?room={room.name}" class="flex items-center">
@@ -87,7 +63,7 @@
                             bind:value={room_name}
                             placeholder="new-room-name"
                         /><button
-                            on:click={() => new_room()}
+                            on:click={() => create_room()}
                             class="inline-block h-10 p-2 mb-2 text-white bg-blue-500 rounded-r-md hover:bg-blue-400"
                             >create</button
                         >

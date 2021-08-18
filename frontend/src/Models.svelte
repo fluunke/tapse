@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-    export interface File {
+    export interface TFile {
         id: number;
         name: string;
         room: number;
