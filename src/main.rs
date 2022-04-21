@@ -42,28 +42,30 @@ pub struct State {
     password: Option<String>,
 }
 
-use clap::Clap;
-
-#[derive(Clap)]
-/// Tapse - Realtime chat and file sharing
+use clap::Parser;
+#[derive(Parser)]
+#[clap(name = "Tapse")]
+#[clap(author = "fluunke")]
+#[clap(version = "0.0.1")]
+#[clap(about = " Real-time chat and file sharing, inspired by PirateBox", long_about = None)]
 struct Opts {
     #[clap(short, long, default_value = "8080")]
     port: u16,
     #[clap(short, long, default_value = "127.0.0.1")]
     interface: IpAddr,
     #[clap(long, default_value = "./tapse.db")]
-    /// Path to the database file
+    /// Path to the sqlite database file
     db: PathBuf,
     #[clap(long)]
-    /// Optional
+    /// Optional access password
     password: Option<String>,
 }
 
 #[async_std::main]
 async fn main() -> Result<(), sqlx::Error> {
-    tide::log::start();
+    let opts = Opts::parse();
 
-    let opts: Opts = Opts::parse();
+    tide::log::start();
 
     // Channel shared between state to send and receive websocket messages.
     let broadcaster = BroadcastChannel::new();
