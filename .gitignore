@@ -1,3 +1,7 @@
 /target
 **/*.rs.bk
 .env
+Cargo.lock
+tapse.db
+tapse.db-shm
+tapse.db-wal

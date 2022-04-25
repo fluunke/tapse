@@ -1,21 +1,22 @@
-use crate::State;
-use crate::{db, models::Message};
-use tide::{convert::json, Response, StatusCode};
+use crate::db::Message;
+use crate::errors::TapseError;
+use crate::Database;
+use axum::extract::Query;
+use axum::{Extension, Json};
 
 #[derive(serde::Deserialize)]
-struct Query {
-    room: String,
-    count: Option<i64>,
+pub struct ListMessages {
+    pub room: String,
+    pub count: Option<i64>,
 }
 
 /// Receive the last 20 chat messages
-pub async fn list_messages(req: tide::Request<State>) -> tide::Result {
-    let query: Query = req.query()?;
+pub async fn list_messages(
+    q: Query<ListMessages>,
+    pool: Extension<Database>,
+) -> Result<Json<Vec<Message>>, TapseError> {
+    let count = q.count.unwrap_or(20).clamp(1, 20);
 
-    let count = query.count.unwrap_or(20).clamp(1, 20);
-
-    let messages: Vec<Message> = db::message::list(&req.state().pool, &query.room, count).await?;
-    let mut res = Response::new(StatusCode::Ok);
-    res.set_body(json!(messages));
-    Ok(res)
+    let messages: Vec<Message> = Message::list(&pool, &q.room, count).await?;
+    Ok(Json(messages))
 }

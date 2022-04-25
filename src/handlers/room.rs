@@ -1,14 +1,13 @@
-use crate::{db, models::Room};
+use crate::{db::Room, errors::TapseError, Broadcaster, Database};
+use axum::{http::StatusCode, Extension, Json};
 use serde::{Deserialize, Serialize};
 
-use crate::{websocket::WSEvent, State};
-use tide::{convert::json, Response, StatusCode};
+use crate::websocket::WSEvent;
 
-pub async fn list_rooms(req: tide::Request<State>) -> tide::Result {
-    let rooms: Vec<Room> = db::room::list(&req.state().pool).await?;
-    let mut res = Response::new(StatusCode::Ok);
-    res.set_body(json!(rooms));
-    Ok(res)
+pub async fn list_rooms(db: Extension<Database>) -> Result<Json<Vec<Room>>, TapseError> {
+    let rooms: Vec<Room> = Room::list(&db).await?;
+
+    Ok(Json(rooms))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -16,15 +15,16 @@ pub struct InsertRoom {
     pub room: String,
 }
 
-pub async fn insert_room(mut req: tide::Request<State>) -> tide::Result {
-    let room: InsertRoom = req.body_json().await?;
-    let send = req.state().broadcaster.clone();
+pub async fn insert_room(
+    room: Json<InsertRoom>,
+    send: Extension<Broadcaster>,
+    pool: Extension<Database>,
+) -> Result<StatusCode, TapseError> {
+    let new_room = Room::add(&pool, &room.room).await?;
 
-    let new_room = db::room::add(&req.state().pool, room.room).await?;
+    send.send(&WSEvent::NewRoom(new_room.clone()))
+        .await
+        .unwrap();
 
-    send.send(&WSEvent::NewRoom(new_room.clone())).await?;
-
-    let mut res = Response::new(200);
-    res.set_body(json!(new_room));
-    Ok(res)
+    Ok(StatusCode::OK)
 }

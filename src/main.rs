@@ -1,10 +1,10 @@
 mod db;
 mod errors;
 mod handlers;
-mod models;
 mod websocket;
+use async_session::MemoryStore;
+use axum::{routing::get, Extension, Router};
 use broadcaster::BroadcastChannel;
-use futures::Future;
 use handlers::{
     file::{list_files, upload_file},
     handle_embedded_file,
@@ -12,21 +12,20 @@ use handlers::{
     room::{insert_room, list_rooms},
     session::{get_username, set_username},
 };
-use http_types::{cookies::SameSite, headers::HeaderValue, StatusCode};
-use models::Session;
 use rust_embed::RustEmbed;
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::{
     net::{IpAddr, SocketAddr},
     path::PathBuf,
-    pin::Pin,
-    sync::Arc,
 };
-use tide::{
-    security::{CorsMiddleware, Origin},
-    sessions::{self},
-    Next, Request, Response,
+
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::TraceLayer,
 };
+
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 use websocket::WSEvent;
 
 use crate::handlers::file::{delete_file, view_file};
@@ -36,9 +35,7 @@ use crate::handlers::file::{delete_file, view_file};
 struct Frontend;
 
 #[derive(Clone)]
-pub struct State {
-    pool: Arc<SqlitePool>,
-    broadcaster: BroadcastChannel<WSEvent>,
+pub struct Server {
     password: Option<String>,
 }
 
@@ -46,7 +43,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[clap(name = "Tapse")]
 #[clap(author = "fluunke")]
-#[clap(version = "0.0.1")]
+#[clap(version = "0.0.2")]
 #[clap(about = " Real-time chat and file sharing, inspired by PirateBox", long_about = None)]
 struct Opts {
     #[clap(short, long, default_value = "8080")]
@@ -61,90 +58,80 @@ struct Opts {
     password: Option<String>,
 }
 
-#[async_std::main]
+pub const SESSION_COOKIE_NAME: &str = "TAPSE_SESSION";
+pub type Broadcaster = BroadcastChannel<WSEvent>;
+pub type Database = Pool<Sqlite>;
+
+#[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
     let opts = Opts::parse();
 
-    tide::log::start();
+    dotenv::dotenv().ok();
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "tapse=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
     // Channel shared between state to send and receive websocket messages.
-    let broadcaster = BroadcastChannel::new();
-
-    let cors = CorsMiddleware::new()
-        .allow_methods("GET, POST, OPTIONS, DELETE".parse::<HeaderValue>().unwrap())
-        .allow_origin(Origin::from("*"))
-        .allow_credentials(true);
+    let broadcaster: Broadcaster = BroadcastChannel::new();
 
     let db_url = format!(
         "sqlite://{}?mode=rwc",
         opts.db.to_str().expect("Invalid database path!")
     );
 
-    let db = SqlitePoolOptions::new()
+    let db: Database = SqlitePoolOptions::new()
         .max_connections(16)
         .connect(&db_url)
         .await?;
 
     sqlx::migrate!().run(&db).await?;
 
-    let mut app = tide::with_state({
-        State {
-            pool: Arc::new(db),
-            broadcaster,
-            password: opts.password,
-        }
-    });
+    let server_state = Server {
+        password: opts.password,
+    };
 
-    app.with(
-        sessions::SessionMiddleware::new(
-            sessions::MemoryStore::new(),
-            "sessions_dont_need_to_be_secure_".as_bytes(),
+    let store = MemoryStore::new();
+
+    let app = Router::new()
+        .route("/", get(handle_embedded_file))
+        .route("/style.css", get(handle_embedded_file))
+        .route("/logo.svg", get(handle_embedded_file))
+        .route("/dist/*path", get(handle_embedded_file))
+        .nest(
+            "/api",
+            Router::new()
+                .route("/session", get(get_username).post(set_username))
+                .route("/rooms", get(list_rooms).post(insert_room))
+                .route("/chat", get(list_messages))
+                .route("/files", get(list_files).post(upload_file))
+                .route("/files/:id/:name", get(view_file).delete(delete_file))
+                .route("/ws", get(websocket::ws_handler)),
         )
-        .with_cookie_name("TAPSE_SESSION")
-        .with_same_site_policy(SameSite::Lax),
-    );
-
-    app.at("/").get(handle_embedded_file);
-    app.at("/*path").get(handle_embedded_file);
-
-    // API handlers
-    let mut api = app.at("/api");
-
-    // Persist username
-    // Note: this is not a *secure* session, neither is it meant to be (yet)
-    api.at("/session").get(get_username);
-    api.at("/session").post(set_username);
-
-    api.with(authenticate);
-
-    api.at("/rooms").post(insert_room);
-    api.at("/rooms").get(list_rooms);
-
-    api.at("/chat").get(list_messages);
-
-    api.at("/files").post(upload_file);
-    api.at("/files").get(list_files);
-    api.at("/files/:id/:name").get(view_file);
-    api.at("/files/:id/:name").delete(delete_file);
-    crate::websocket::make_ws(api);
-
-    app.with(cors);
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                // .allow_origin(Origin::exact("*".parse().unwrap()))
+                .allow_methods(Any)
+                .allow_headers(Any)
+                .allow_credentials(true),
+        )
+        .layer(TraceLayer::new_for_http())
+        .layer(Extension(server_state))
+        .layer(Extension(broadcaster))
+        .layer(Extension(db))
+        .layer(Extension(store));
 
     let addr: SocketAddr = SocketAddr::new(opts.interface, opts.port);
+    tracing::info!("Listening on {}", addr);
 
-    app.listen(addr).await?;
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+
     Ok(())
-}
-
-fn authenticate<'a>(
-    req: Request<State>,
-    next: Next<'a, State>,
-) -> Pin<Box<dyn Future<Output = tide::Result> + Send + 'a>> {
-    Box::pin(async {
-        let user: Option<Session> = req.session().get("user");
-        match user {
-            Some(_) => Ok(next.run(req).await),
-            None => Ok(Response::new(StatusCode::Unauthorized)),
-        }
-    })
 }
