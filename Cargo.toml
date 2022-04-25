@@ -38,5 +38,4 @@ features = ["derive"]
 version = "1.0"
 
 [dependencies.sqlx]
-features = ["runtime-async-std-rustls", "sqlite", "macros", "chrono", "offline"]
-version = "0.5"
+version = "0.5.13"
