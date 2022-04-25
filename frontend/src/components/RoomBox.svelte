@@ -1,22 +1,24 @@
-<script lang="typescript">
+<script lang="ts">
     import { rooms } from "../stores/room";
     import { slide } from "svelte/transition";
     import { current_room } from "../stores/room";
 
     import { MenuIcon, PlusSquareIcon } from "svelte-feather-icons";
 
-    let room_name: string = "";
-    let add_room_shown: boolean = false;
+    let room_name_input: string = "";
+    let room_creation_prompt: boolean = false;
 
     function create_room() {
         fetch(`/api/rooms`, {
             method: "POST",
-            body: JSON.stringify({ room: room_name }),
+            body: JSON.stringify({ room: room_name_input }),
             headers: { "Content-type": "application/json; charset=UTF-8" },
         });
 
-        room_name = "";
-        add_room_shown = false;
+        // reset name input
+        room_name_input = "";
+        
+        room_creation_prompt = false;
     }
 </script>
 
@@ -41,6 +43,13 @@
                             {room.name}
                         </div>
                     {/if}
+
+                    {#if room.unread_messages > 0}
+                        <div class="inline-block text-xs text-red-500">
+                            {room.unread_messages}
+                        </div>
+                    {/if} 
+                    
                 </div>
             </div>
         {/each}
@@ -48,19 +57,19 @@
         <hr />
         <div class="pt-1 text-center transition hover:bg-gray-50 rounded-b-md">
             <div
-                on:click={() => (add_room_shown = !add_room_shown)}
+                on:click={() => (room_creation_prompt = !room_creation_prompt)}
                 class="px-3 pt-2 pb-3 cursor-pointer"
             >
                 <PlusSquareIcon class="inline align-middle" size="16" />
                 <div class="inline-block">add room</div>
             </div>
-            {#if add_room_shown}
+            {#if room_creation_prompt}
                 <div transition:slide={{ duration: 100 }} class="w-full">
                     <div class="shadow-md">
                         <input
                             class="h-10 py-1 pb-1 mb-1 text-center rounded-l-md"
                             type="text"
-                            bind:value={room_name}
+                            bind:value={room_name_input}
                             placeholder="new-room-name"
                         /><button
                             on:click={() => create_room()}

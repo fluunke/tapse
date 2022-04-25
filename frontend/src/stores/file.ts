@@ -1,4 +1,5 @@
-import { writable, Writable, derived, get } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import type { Writable } from 'svelte/store';
 import type TFile from "../Models.svelte";
 
 type FileStore = {

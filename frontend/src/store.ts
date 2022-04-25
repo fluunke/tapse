@@ -22,20 +22,24 @@ export async function get_session() {
 get_session();
 
 export async function set_session(new_name: string, password: string) {
-    let res = await fetch(`/api/session`, {
+    let res = fetch(`/api/session`, {
         body: JSON.stringify({
             username: new_name,
             password,
         }),
+        headers: {
+            'Content-Type': 'application/json'
+        },
         method: "POST",
         credentials: "include",
+
     });
 
-    let data = await res.json();
-    username.set(data.username);
+    res.then(async (res) => {
+        // Required to reload WS connection with new session    
+        window.location.reload();
+    })
 
-    // Required to reload WS connection with new session    
-    window.location.reload();
 }
 
 

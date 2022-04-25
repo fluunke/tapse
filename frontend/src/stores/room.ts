@@ -1,4 +1,5 @@
-import { writable, Writable } from 'svelte/store';
+import { writable } from 'svelte/store';
+import type { Writable } from 'svelte/store';
 import type Room from "../Model.svelte";
 
 export const current_room = writable(1);
