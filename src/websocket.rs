@@ -78,8 +78,6 @@ async fn handle_socket(stream: WebSocket, user: User, pool: Database, broadcaste
         while let Some(Ok(msg)) = receiver.next().await {
             match msg {
                 ws::Message::Text(t) => {
-                    warn!("client send str: {:?}", t);
-
                     let action = match_ws_action(&t, &user, &pool).await;
                     broadcaster.send(&action).await.unwrap();
                 }
@@ -92,7 +90,6 @@ async fn handle_socket(stream: WebSocket, user: User, pool: Database, broadcaste
             }
         }
     });
-    warn!("running tasks");
 
     tokio::select! {
         _ = (&mut send_task) => recv_task.abort(),
