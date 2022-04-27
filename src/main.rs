@@ -30,10 +30,6 @@ use websocket::WSEvent;
 
 use crate::handlers::file::{delete_file, view_file};
 
-#[derive(RustEmbed)]
-#[folder = "frontend/build"]
-struct Frontend;
-
 #[derive(Clone)]
 pub struct Server {
     password: Option<String>,

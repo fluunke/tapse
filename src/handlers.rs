@@ -3,12 +3,16 @@ pub mod message;
 pub mod room;
 pub mod session;
 
-use crate::Frontend;
 use axum::{
     body::{boxed, Full},
     http::{header, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "frontend/dist"]
+struct Frontend;
 
 pub async fn handle_embedded_file(uri: Uri) -> impl IntoResponse {
     let mut path = uri.path().trim_start_matches('/').to_owned();
