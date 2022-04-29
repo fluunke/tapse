@@ -1,5 +1,6 @@
 /target
 **/*.rs.bk
+frontend/dist/
 .env
 Cargo.lock
 tapse.db
