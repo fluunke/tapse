@@ -12,7 +12,7 @@ use axum::{
 use futures::{SinkExt, StreamExt};
 use serde_json::{from_str, json};
 use sqlx::{Pool, Sqlite};
-use tracing::{debug, warn};
+use tracing::debug;
 
 #[derive(Clone, serde::Serialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -83,7 +83,7 @@ async fn handle_socket(stream: WebSocket, user: User, pool: Database, broadcaste
                 }
 
                 ws::Message::Close(_) => {
-                    warn!("client disconnected");
+                    debug!("Closing a websocket connection");
                     return;
                 }
                 _ => {}
@@ -118,7 +118,7 @@ async fn match_ws_action(input: &str, user: &User, pool: &Pool<Sqlite>) -> WSEve
     }
     // Handle invalid queries
     else {
-        debug!("Invalid websocket query received: {}", input);
+        debug!("Invalid websocket query: {}", input);
         WSEvent::error(&user.id, TapseError::InvalidQuery)
     }
 }

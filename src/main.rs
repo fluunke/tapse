@@ -12,8 +12,9 @@ use handlers::{
     room::{insert_room, list_rooms},
     session::{get_username, set_username},
 };
-use rust_embed::RustEmbed;
+
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+
 use std::{
     net::{IpAddr, SocketAddr},
     path::PathBuf,
@@ -96,7 +97,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/", get(handle_embedded_file))
         .route("/style.css", get(handle_embedded_file))
         .route("/logo.svg", get(handle_embedded_file))
-        .route("/dist/*path", get(handle_embedded_file))
+        .route("/assets/*path", get(handle_embedded_file))
         .nest(
             "/api",
             Router::new()
@@ -110,10 +111,8 @@ async fn main() -> Result<(), sqlx::Error> {
         .layer(
             CorsLayer::new()
                 .allow_origin(Any)
-                // .allow_origin(Origin::exact("*".parse().unwrap()))
                 .allow_methods(Any)
-                .allow_headers(Any)
-                .allow_credentials(true),
+                .allow_headers(Any),
         )
         .layer(TraceLayer::new_for_http())
         .layer(Extension(server_state))

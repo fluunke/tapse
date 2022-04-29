@@ -61,7 +61,7 @@ pub struct AuthError;
 
 impl IntoResponse for AuthError {
     fn into_response(self) -> Response {
-        (StatusCode::UNAUTHORIZED, "Unauthorized").into_response()
+        StatusCode::UNAUTHORIZED.into_response()
     }
 }
 
