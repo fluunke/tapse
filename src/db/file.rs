@@ -22,7 +22,9 @@ impl File {
     pub async fn list(room: &str, pool: &SqlitePool) -> Result<Vec<File>, TapseError> {
         match sqlx::query_as!(
             File,
-            "select id, name, room, upload_date from files WHERE room = $1 ORDER BY upload_date DESC",
+            "select id, name, room, upload_date from files
+             WHERE room = $1
+             ORDER BY upload_date DESC",
             room
         )
         .fetch_all(pool)
@@ -56,18 +58,21 @@ impl File {
                 return Err(TapseError::FileEmpty);
             }
 
-            new_files.push(sqlx::query_as!(
-                File,
-                r#"
-                insert into files (id, name, room, file, upload_date)
-                values ($1, $2, $3, $4, datetime('now')) returning id as "id!: String", name as "name!: String", upload_date as "upload_date!: NaiveDateTime", room as "room!: i64""#,
-                id,
-                filename,
-                room,
-                bytes
-            )
-            .fetch_one(pool)
-            .await?);
+            new_files.push(
+                sqlx::query_as!(
+                    File,
+                    r#"
+                     insert into files (id, name, room, file, upload_date)
+                     values ($1, $2, $3, $4, datetime('now'))
+                     returning id, name, upload_date, room"#,
+                    id,
+                    filename,
+                    room,
+                    bytes
+                )
+                .fetch_one(pool)
+                .await?,
+            );
         }
 
         Ok(new_files)
@@ -75,7 +80,8 @@ impl File {
 
     pub async fn get(file: FileQuery, pool: &SqlitePool) -> Result<(File, Vec<u8>), TapseError> {
         let q = sqlx::query!(
-            r#"select * from files where id = $1 and name = $2"#,
+            r#"select * from files
+               where id = $1 and name = $2"#,
             file.id,
             file.name
         )
@@ -94,7 +100,8 @@ impl File {
 
     pub(crate) async fn delete(file: &FileQuery, pool: &SqlitePool) -> Result<(), TapseError> {
         sqlx::query!(
-            r#"delete from files where id = $1 and name = $2"#,
+            r#"delete from files
+               where id = $1 and name = $2"#,
             file.id,
             file.name
         )

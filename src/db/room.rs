@@ -25,13 +25,15 @@ impl Room {
             Room,
             r#"
             insert into rooms (name, creation_date)
-            values ($1, datetime('now')) returning id as "id!: i64", name as "name!: String", creation_date as "creation_date!: NaiveDateTime"
-        "#, room
+            values ($1, datetime('now')) returning id, name, creation_date
+        "#,
+            room
         )
         .fetch_one(pool)
-        .await{
+        .await
+        {
             Ok(room) => Ok(room),
-            Err(e) => Err(TapseError::RoomCreationError(e))
+            Err(e) => Err(TapseError::RoomCreationError(e)),
         }
     }
 
