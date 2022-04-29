@@ -1,0 +1,271 @@
+{
+  "db": "SQLite",
+  "0dd3757cb4d34ce0e5842faceb99f814083768021a06e21f9c079e6706b0a016": {
+    "query": "select id, name, room, upload_date from files\n             WHERE room = $1\n             ORDER BY upload_date DESC",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "room",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "upload_date",
+          "ordinal": 3,
+          "type_info": "Datetime"
+        }
+      ],
+      "parameters": {
+        "Right": 1
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "153c518ffea975bd0b20f17a5b67af1795491af84aa4cf2a90d95f311b74b0d3": {
+    "query": "delete from files\n               where id = $1 and name = $2",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 2
+      },
+      "nullable": []
+    }
+  },
+  "6e08be85b37f6f727b0fbc7499404ee8476b2ed130ebb89ec672acd0f62758ac": {
+    "query": "\n            insert into rooms (name, creation_date)\n            values ($1, datetime('now')) returning id, name, creation_date\n        ",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "creation_date",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        }
+      ],
+      "parameters": {
+        "Right": 1
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "74f440de577a8948b87e59aa582d09e3a7912ec74edeee01152c69aad5910735": {
+    "query": "\n            insert into messages(room, author, content, creation_date)\n            values ($1, $2, $3, datetime('now'))\n            returning id, content, creation_date, room, author",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "content",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "creation_date",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        },
+        {
+          "name": "room",
+          "ordinal": 3,
+          "type_info": "Int64"
+        },
+        {
+          "name": "author",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Right": 3
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "caacf9076c020ef74ea713460210664ca055c85eb15bf2f693bcd414a1aee4d0": {
+    "query": "\n                     insert into files (id, name, room, file, upload_date)\n                     values ($1, $2, $3, $4, datetime('now'))\n                     returning id, name, upload_date, room",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "upload_date",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        },
+        {
+          "name": "room",
+          "ordinal": 3,
+          "type_info": "Int64"
+        }
+      ],
+      "parameters": {
+        "Right": 4
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "e1aa4a867f14c309d72f6ee2ffd60e636c93f55fa15b721eaf9b18402683bb7f": {
+    "query": "\n            select id, name, creation_date from rooms",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "creation_date",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        }
+      ],
+      "parameters": {
+        "Right": 0
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "ebd2a9b13d35dcdb363a4d03be7af344b30ace377e6f5b6d81e85d19abc37583": {
+    "query": "\n            select * from (select id, author, room, content, creation_date from messages\n            where room = $1\n            order by creation_date desc limit $2)\n            as x order by creation_date asc",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "author",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "room",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "content",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "creation_date",
+          "ordinal": 4,
+          "type_info": "Datetime"
+        }
+      ],
+      "parameters": {
+        "Right": 2
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "f4a652b3f6ec9f131feb1b457301b0d5a3adc20b0bde5c023f2cc861dd460dfd": {
+    "query": "select * from files\n               where id = $1 and name = $2",
+    "describe": {
+      "columns": [
+        {
+          "name": "room",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "file",
+          "ordinal": 3,
+          "type_info": "Blob"
+        },
+        {
+          "name": "upload_date",
+          "ordinal": 4,
+          "type_info": "Datetime"
+        }
+      ],
+      "parameters": {
+        "Right": 2
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  }
+}

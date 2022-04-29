@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - "v*" # Version tag
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release_linux:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - uses: pnpm/action-setup@v2.1.0
+        with:
+          version: 6.0.2
+          run_install: true
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build
+      - name: Install gcc-mingw-w64 for cross compilation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          target: x86_64-pc-windows-gnu
+          profile: minimal
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v1.0.1
+      - name: Compile
+        run: |
+          cargo build --release --verbose
+          mv target/release/tapse target/release/tapse-linux-x86_64
+          cargo build --target x86_64-pc-windows-gnu --release --verbose
+          mv target/x86_64-pc-windows-gnu/release/tapse.exe target/release/tapse-windows-x86_64.exe
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: |
+            target/release/tapse-linux-x86_64
+            target/release/tapse-windows-x86_64.exe

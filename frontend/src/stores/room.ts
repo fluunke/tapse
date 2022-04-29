@@ -61,7 +61,7 @@ export class Room implements RoomInterface {
     }
 
     async fetch_rooms() {
-        const r = await fetch(`http://localhost:8080/api/rooms`);
+        const r = await fetch(`/api/rooms`);
         let json: RoomInterface[] = await r.json();
 
         this.store.update(store => ({ ...store, rooms: json }));
