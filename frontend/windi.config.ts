@@ -5,5 +5,5 @@ export default defineConfig({
     extract: {
         include: ['src/**/*.{html,vue,jsx,tsx,svelte}'],
     },
-    safelist: 'rotate-45 rotate-0',
+    safelist: 'rotate-45 rotate-0 font-semibold',
 })

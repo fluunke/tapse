@@ -11,14 +11,11 @@ export class Session {
 
     async get_session() {
         let res = await fetch("/api/session");
-
         let status = await res.status;
 
         if (status == 401) {
             this.login_modal.set(true)
         }
-
-        let data = await res.json();
     };
 
     async set_session(new_name: string, password: string) {
@@ -35,7 +32,7 @@ export class Session {
 
         });
 
-        res.then(async (res) => {
+        res.then(async () => {
             // Required to reload WS connection with new session    
             window.location.reload();
         })

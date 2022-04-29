@@ -14,7 +14,6 @@
     "postcss-windicss": "^1.0.0",
     "svelte": "^3.47.0",
     "svelte-check": "^2.7.0",
-    "svelte-feather-icons": "^4.0.0",
     "svelte-icons": "^2.1.0",
     "svelte-preprocess": "^4.10.6",
     "svelte-websocket-store": "^1.1.23",

@@ -57,14 +57,17 @@
         if (new_msg.room == $room.current_room) {
           message.add_message(new_msg);
         } else {
-          //TODO: handle unread messages
-          // I can't find a neat way to access a single room item from here.
+          room.increment_notifications(new_msg.room);
         }
       }
 
       if (is_files(ws_msg)) {
         let new_files: Array<TFile> = ws_msg.new_files;
-        file.add_files(new_files);
+        if (new_files[0].room == $room.current_room) {
+          file.add_files(new_files);
+        } else {
+          room.increment_notifications(new_files[0].room);
+        }
       }
 
       if (is_file_delete(ws_msg)) {
@@ -90,7 +93,7 @@
     class="flex flex-col px-4 space-x-2 space-y-8 h-2/3 md:h-full md:flex-row lg:space-y-0"
   >
     <Chat message_store={message} {room} />
-    <Files file_store={file} {room} />
+    <Files {file} {room} />
   </div>
 </div>
 

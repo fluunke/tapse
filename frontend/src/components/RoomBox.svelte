@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Room } from "src/stores/room";
-  import { slide } from "svelte/transition";
+  import { slide, fade } from "svelte/transition";
 
   export let room_store: Room;
 
@@ -18,16 +18,22 @@
         on:click={() => {
           room_store.set_current_room(room.id);
         }}
-        class="flex p-1 transition rounded-md cursor-pointer children:self-center hover:bg-gray-200"
+        class="relative flex p-1 transition rounded-md cursor-pointer children:self-center hover:bg-gray-200"
       >
-        {#if $room_store.current_room == room.id}
-          <div class="text-sm font-bold">
-            {room.name}
-          </div>
-        {:else}
-          <div class="text-sm">
-            {room.name}
-          </div>
+        <div
+          class:font-bold={$room_store.current_room == room.id}
+          class:font-semibold={room.unread_notifications > 0}
+          class="text-sm font-bold"
+        >
+          {room.name}
+        </div>
+        {#if room.unread_notifications > 0}
+          <span
+            transition:fade={{ duration: 300 }}
+            class=" inline-block py-1 px-1.5 leading-none text-center text-[0.5rem] whitespace-nowrap align-baseline font-bold bg-red-600 text-white rounded-full absolute top-[0.6rem] -right-[1rem]"
+          >
+            {room.unread_notifications}
+          </span>
         {/if}
       </li>
     {/each}
@@ -37,7 +43,7 @@
       class="flex p-1 transition rounded-md cursor-pointer children:self-center hover:bg-gray-200"
     >
       {#if room_creation_prompt}
-        <div transition:slide={{ duration: 100 }} class="flex flex-row">
+        <div transition:slide={{ duration: 200 }} class="flex flex-row">
           <input
             bind:value={room_name_input}
             class="p-1 border rounded-l-md"

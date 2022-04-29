@@ -7,7 +7,6 @@ dependencies:
   postcss-windicss: 1.0.0_postcss@8.4.12
   svelte: 3.47.0
   svelte-check: 2.7.0_postcss@8.4.12+svelte@3.47.0
-  svelte-feather-icons: 4.0.0
   svelte-icons: 2.1.0
   svelte-preprocess: 4.10.6_4065bdc4583069701fc36edacca01576
   svelte-websocket-store: 1.1.23
@@ -894,12 +893,6 @@ packages:
       svelte: ^3.24.0
     resolution:
       integrity: sha512-GrvG24j0+i8AOm0k0KyJ6Dqc+TAR2yzB7rtS4nljHStunVxCTr/1KYlv4EsOeoqtHLzeWMOd5D2O6nDdP/yw4A==
-  /svelte-feather-icons/4.0.0:
-    dependencies:
-      svelte: 3.47.0
-    dev: false
-    resolution:
-      integrity: sha512-4ieUsjp+VYa1r6y80jDt9zRiRUZyJNbESpRdHdJJhiBubyuXX96A7f1UZSK4olxzP6Qsg5ZAuyZlnmvD+/swAA==
   /svelte-hmr/0.14.11_svelte@3.47.0:
     dependencies:
       svelte: 3.47.0
@@ -1049,7 +1042,6 @@ specifiers:
   postcss-windicss: ^1.0.0
   svelte: ^3.47.0
   svelte-check: ^2.7.0
-  svelte-feather-icons: ^4.0.0
   svelte-icons: ^2.1.0
   svelte-preprocess: ^4.10.6
   svelte-websocket-store: ^1.1.23
