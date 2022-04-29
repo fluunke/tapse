@@ -1,18 +1,11 @@
 <script lang="ts">
-  import Navbar from "./components/Navbar.svelte";
   import Files from "./components/Files.svelte";
   import Chat from "./components/Chat.svelte";
-  import ForumView from "./components/ForumView.svelte";
   import Footer from "./components/Footer.svelte";
 
   import { SvelteToast, toast } from "@zerodevx/svelte-toast";
 
   import { fade } from "svelte/transition";
-
-  import { login_modal, normal_view, set_session } from "./store.js";
-  import { files } from "./stores/file";
-  import { current_room, rooms } from "./stores/room";
-  import { fetch_messages, messages } from "./stores/message.js";
 
   import { onMount } from "svelte";
   import {
@@ -21,31 +14,29 @@
     is_file_delete,
     is_message,
     is_room,
-    type TFile,
   } from "./Models.svelte";
   import RoomBox from "./components/RoomBox.svelte";
-  import ws from "./stores/ws.js";
+  import ws from "./stores/ws";
 
-  import type { Message, Room } from "./Models.svelte";
+  import { Session } from "./stores/session";
+  import { Room, type RoomInterface } from "./stores/room";
+  import { TFile } from "./stores/file";
+  import { Message, type MessageInterface } from "./stores/message";
 
-  $: fetch_messages($current_room).then((x) => {
-    messages.set(x);
-  });
+  let session = new Session();
+  let room = new Room();
+  let file = new TFile($room.current_room);
+  let message = new Message($room.current_room);
+
+  // Fetch new data when changing room
+  $: message.fetch_messages($room.current_room).then((_) => {});
+  $: file.fetch_files($room.current_room).then((_) => {});
 
   let new_username: string;
-  let code: string;
+  let password: string;
 
+  // Mount websocket connection
   onMount(async function () {
-    // fetch all data
-    const f = await fetch(`/api/files?room=${$current_room}`);
-    files.set(await f.json());
-
-    const m = await fetch(`/api/chat?room=${$current_room}`);
-    messages.set(await m.json());
-
-    const r = await fetch(`/api/rooms`);
-    rooms.set(await r.json());
-
     ws.websocket_subscribe((socketMessage) => {
       let ws_msg: any = {};
       try {
@@ -62,15 +53,9 @@
       }
 
       if (is_message(ws_msg)) {
-        let new_msg: Message = ws_msg.new_message;
-        if (new_msg.room == $current_room) {
-          // scroll to bottom
-          let msgs = document.getElementById("msgs")!;
-          setTimeout(function () {
-            msgs.scrollTo(0, msgs.scrollHeight);
-          }, 200);
-
-          messages.set([...$messages, new_msg]);
+        let new_msg: MessageInterface = ws_msg.new_message;
+        if (new_msg.room == $room.current_room) {
+          message.add_message(new_msg);
         } else {
           //TODO: handle unread messages
           // I can't find a neat way to access a single room item from here.
@@ -79,33 +64,44 @@
 
       if (is_files(ws_msg)) {
         let new_files: Array<TFile> = ws_msg.new_files;
-
-        new_files.forEach((f) => {
-          files.set([...$files, f]);
-        });
+        file.add_files(new_files);
       }
 
       if (is_file_delete(ws_msg)) {
         let deleted_file: string = ws_msg.delete_file;
-        files.set($files.filter((f) => f.id !== deleted_file));
+        file.remove_file(deleted_file);
       }
 
       if (is_room(ws_msg)) {
-        let room: Room = ws_msg.new_room;
-        rooms.set([...$rooms, room]);
+        let new_room: RoomInterface = ws_msg.new_room;
+        room.add_room(new_room);
       }
     });
   });
 </script>
 
-{#if $login_modal}
+<SvelteToast />
+
+<div
+  class="w-full h-full py-2 my-8 bg-white shadow-lg md:h-auto lg:w-2/3 rounded-xl md:w-2/3 md:py-4 xl:w-2/4"
+>
+  <RoomBox room_store={room} />
+  <div
+    class="flex flex-col px-4 space-x-2 space-y-8 h-2/3 md:h-full md:flex-row lg:space-y-0"
+  >
+    <Chat message_store={message} {room} />
+    <Files file_store={file} {room} />
+  </div>
+</div>
+
+{#if $session}
   <div
     transition:fade
     class="absolute top-0 left-0 flex items-center justify-center w-full h-full bg-gray-200"
   >
     <div class="flex flex-col p-8 bg-white border rounded-lg shadow-2xl">
       <div class="flex flex-col flex-nowrap">
-        <div class="mb-4 font-bold text-lg text-center">Tapse login</div>
+        <div class="mb-4 text-lg font-bold text-center">Tapse login</div>
         <input
           class="p-2 border rounded-t-lg"
           placeholder="Username"
@@ -115,32 +111,18 @@
         /><input
           class="p-2 border"
           placeholder="Access code (if required)"
-          bind:value={code}
+          bind:value={password}
           type="text"
         />
       </div>
       <button
         class="p-2 font-bold text-white transition-all bg-blue-400 rounded-b-lg hover:bg-blue-500 hover:shadow-lg"
         on:click={() => {
-          set_session(new_username, code);
+          session.set_session(new_username, password);
         }}>Log in</button
       >
     </div>
   </div>
-{:else}
-  <Navbar />
-  <SvelteToast />
-  <div class="my-4 text-center">
-    <RoomBox />
-  </div>
-  {#if $normal_view}
-    <div
-      class="flex flex-row flex-wrap items-baseline justify-center space-x-6 bg-white rounded-xl"
-    >
-      <Chat />
-      <Files />
-    </div>
-  {/if}
-
-  <Footer />
 {/if}
+
+<Footer />

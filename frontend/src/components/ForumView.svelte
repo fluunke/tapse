@@ -1,12 +1,7 @@
-//TODO: This wouldn't make much sense until message replies are implemented
-
-/*
 <script lang="ts">
-    import { messages } from "../stores/message";
-    import { files } from "../stores/file";
 </script>
 
-<div class="mt-5 w-full p-8 h-80 bg-white border rounded-md flex flex-col">
-    Not yet implemented!
+<!-- TODO: This wouldn't make much sense until message replies are implemented  -->
+<div class="flex flex-col w-full p-8 mt-5 bg-white border rounded-md h-80">
+  Not yet implemented!
 </div>
-*/

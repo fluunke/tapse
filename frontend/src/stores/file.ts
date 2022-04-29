@@ -1,22 +1,71 @@
 import { writable, derived, get } from 'svelte/store';
 import type { Writable } from 'svelte/store';
-import type TFile from "../Models.svelte";
 
-type FileStore = {
-    subscribe: Writable<TFile[]>["subscribe"],
-    set: Writable<TFile[]>["set"]
+export interface TFileInterface {
+    id: string;
+    name: string;
+    room: number;
+    upload_date: Date;
 }
 
-export const files: FileStore = writable([]);
-export let search: Writable<string> = writable("");
+type FileStore = {
+    subscribe: Writable<TFileInterface[]>["subscribe"],
+    set: Writable<TFileInterface[]>["set"],
+    update: Writable<TFileInterface[]>["update"],
+}
 
-export const searched_files = derived(
-    [search, files],
-    // oh no
-    ($x, set) => {
-        set(
-            get(files).filter((f: TFile) =>
-                f.name.toLowerCase().includes($x[0].toLowerCase())
-            ));
+export class TFile implements TFileInterface {
+    id: string;
+    name: string;
+    room: number;
+    upload_date: Date;
+
+
+    store: FileStore = writable([]);
+
+    constructor(room: number) {
+        this.store = writable([]);
     }
-)
+
+    async fetch_files(room: number) {
+        const f = await fetch(`/api/files?room=${room}`);
+        let json = await f.json();
+
+        this.store.set(json);
+    }
+
+    async send_file(room: number, form: HTMLElement) {
+        let formData = new FormData(form);
+
+        await fetch(`/api/files?room=${room}`, {
+            method: "POST",
+            body: formData,
+        });
+    }
+
+    add_files(files: TFileInterface[]) {
+        this.store.update(store => ([...store, ...files]));
+    }
+
+
+    async delete_file(file: TFileInterface) {
+
+        let res = await fetch(`/api/files/${file.id}/${file.name}`, {
+            method: "DELETE",
+        });
+
+        if (res.ok) {
+            this.remove_file(file.id);
+        }
+    }
+
+    remove_file(file: string) {
+        this.store.update(files => {
+            return files.filter(f => f.id !== file)
+        });
+    }
+
+    subscribe(run) {
+        return this.store.subscribe(run);
+    }
+}
