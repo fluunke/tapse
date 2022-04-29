@@ -1,6 +1,8 @@
 import { writable } from 'svelte/store';
 
-let socket = new WebSocket("ws://" + window.location.host + "/api/ws");
+let protocol = (window.location.protocol === "https:") ? "wss://" : "ws://";
+
+let socket = new WebSocket(protocol + window.location.host + "/api/ws");
 const ws_store = writable('');
 
 // Connection opened
