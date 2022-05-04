@@ -54,10 +54,11 @@
           break;
 
         case "incoming_message":
-          if (ws_msg.room == $room.current_room) {
-            message.add_message(ws_msg);
+          let new_msg = ws_msg.incoming_message;
+          if (new_msg.room == $room.current_room) {
+            message.add_message(new_msg);
           } else {
-            room.increment_notifications(ws_msg.room);
+            room.increment_notifications(new_msg.room);
           }
           break;
 
