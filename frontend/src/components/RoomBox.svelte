@@ -1,11 +1,17 @@
 <script lang="ts">
+  import type { TFile, TFileInterface } from "src/stores/file";
+
   import type { Room } from "src/stores/room";
+  import type { Writable } from "svelte/store";
   import { slide, fade } from "svelte/transition";
 
   export let room_store: Room;
+  export let file: TFile;
 
   let room_name_input: string = "";
   let room_creation_prompt: boolean = false;
+
+  export let move_file_prompt: Writable<TFileInterface[]>;
 </script>
 
 <div class="relative pb-2" id="room_box">
@@ -14,14 +20,22 @@
   <ul class="flex flex-wrap justify-center mb-2 space-x-3">
     {#each $room_store.rooms as room}
       <li
+        class:border-dotted={$move_file_prompt.length > 0}
+        class:border-3={$move_file_prompt.length > 0}
+        class:border-gray-800={$move_file_prompt.length > 0}
         transition:slide={{ duration: 100 }}
         on:click={() => {
-          room_store.set_current_room(room.id);
+          if ($move_file_prompt.length > 0) {
+            file.move_files($move_file_prompt, room.name);
+            move_file_prompt.set([]);
+          } else {
+            room_store.set_current_room(room.name);
+          }
         }}
         class="relative flex p-1 transition rounded-md cursor-pointer children:self-center hover:bg-gray-200"
       >
         <div
-          class:font-bold={$room_store.current_room == room.id}
+          class:font-bold={$room_store.current_room == room.name}
           class:font-semibold={room.unread_notifications > 0}
           class="text-sm font-bold"
         >

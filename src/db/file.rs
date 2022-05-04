@@ -1,4 +1,4 @@
-use crate::errors::TapseError;
+use crate::{errors::TapseError, websocket::events::FileMove};
 use axum::extract::Multipart;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,7 @@ use sqlx::SqlitePool;
 #[derive(Deserialize, Serialize, sqlx::FromRow, Clone, Debug)]
 pub struct File {
     pub id: String,
-    pub room: i64,
+    pub room: String,
     pub name: String,
     pub upload_date: NaiveDateTime,
 }
@@ -19,7 +19,7 @@ pub struct FileQuery {
 }
 
 impl File {
-    pub async fn list(room: &str, pool: &SqlitePool) -> Result<Vec<File>, TapseError> {
+    pub async fn list(pool: &SqlitePool, room: &str) -> Result<Vec<Self>, TapseError> {
         match sqlx::query_as!(
             File,
             "select id, name, room, upload_date from files
@@ -36,13 +36,17 @@ impl File {
     }
 
     pub async fn insert(
+        pool: &SqlitePool,
         mut files: Multipart,
         room: &str,
-        pool: &SqlitePool,
-    ) -> Result<Vec<File>, TapseError> {
-        let mut new_files: Vec<File> = Vec::new();
+    ) -> Result<Vec<Self>, TapseError> {
+        let mut new_files: Vec<Self> = Vec::new();
 
-        while let Some(field) = files.next_field().await.unwrap() {
+        while let Some(field) = files
+            .next_field()
+            .await
+            .expect("Failed to get next multipart field")
+        {
             // Randomly generated ID for the file.
             let id = nanoid::nanoid!(7);
 
@@ -78,7 +82,7 @@ impl File {
         Ok(new_files)
     }
 
-    pub async fn get(file: FileQuery, pool: &SqlitePool) -> Result<(File, Vec<u8>), TapseError> {
+    pub async fn get(pool: &SqlitePool, file: FileQuery) -> Result<(Self, Vec<u8>), TapseError> {
         let q = sqlx::query!(
             r#"select * from files
                where id = $1 and name = $2"#,
@@ -88,7 +92,7 @@ impl File {
         .fetch_one(pool)
         .await?;
 
-        let file = File {
+        let file = Self {
             id: q.id,
             name: q.name,
             room: q.room,
@@ -98,16 +102,42 @@ impl File {
         Ok((file, q.file))
     }
 
-    pub(crate) async fn delete(file: &FileQuery, pool: &SqlitePool) -> Result<(), TapseError> {
-        sqlx::query!(
-            r#"delete from files
-               where id = $1 and name = $2"#,
-            file.id,
-            file.name
-        )
-        .execute(pool)
-        .await?;
+    pub async fn move_files(pool: &SqlitePool, files: &FileMove) -> Result<(), TapseError> {
+        // yes, this could probably be done in one query
+        for file in &files.move_files {
+            sqlx::query!(
+                r#"
+            update files
+            set room = $1
+            where id = $2
+            and name = $3
+        "#,
+                files.new_room,
+                file.id,
+                file.name
+            )
+            .execute(pool)
+            .await?;
+        }
 
         Ok(())
+    }
+
+    pub(crate) async fn delete(
+        pool: &SqlitePool,
+        files: &Vec<FileQuery>,
+    ) -> Result<Vec<FileQuery>, TapseError> {
+        for file in files {
+            sqlx::query!(
+                r#"delete from files
+                where id = $1 and name = $2"#,
+                file.id,
+                file.name
+            )
+            .execute(pool)
+            .await?;
+        }
+
+        Ok(files.clone())
     }
 }

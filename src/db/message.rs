@@ -7,7 +7,7 @@ use sqlx::SqlitePool;
 pub struct Message {
     pub id: i64,
     pub author: String,
-    pub room: i64,
+    pub room: String,
     pub content: String,
     pub creation_date: NaiveDateTime,
 }
@@ -17,7 +17,7 @@ impl Message {
         pool: &SqlitePool,
         author: &str,
         message: &MessageQuery,
-    ) -> Result<Message, TapseError> {
+    ) -> Result<Self, TapseError> {
         message.valid()?;
 
         Ok(sqlx::query_as!(
@@ -34,11 +34,7 @@ impl Message {
         .await?)
     }
 
-    pub async fn list(
-        pool: &SqlitePool,
-        room: &str,
-        amount: i64,
-    ) -> Result<Vec<Message>, TapseError> {
+    pub async fn list(pool: &SqlitePool, room: &str, amount: i64) -> Result<Vec<Self>, TapseError> {
         match sqlx::query_as!(
             Message,
             "
@@ -60,20 +56,18 @@ impl Message {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct MessageQuery {
-    pub room: i64,
+    pub room: String,
     pub content: String,
 }
 
 impl MessageQuery {
     pub fn valid(&self) -> Result<(), TapseError> {
-        // Reject empty messages...
-        if self.content.trim().is_empty() {
-            return Err(TapseError::MessageTooShort);
+        let content = self.content.trim();
+
+        if content.is_empty() || content.len() > 1024 {
+            return Err(TapseError::MessageLength);
         }
-        // ...and too long messages
-        if self.content.trim().len() > 1000 {
-            return Err(TapseError::MessageTooLong);
-        };
+
         Ok(())
     }
 }

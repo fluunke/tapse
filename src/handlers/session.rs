@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{errors::TapseError, Server, SESSION_COOKIE_NAME};
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 pub struct SessionQuery {
     pub username: String,
     pub password: Option<String>,
@@ -73,7 +73,7 @@ pub struct User {
 
 impl Default for User {
     fn default() -> Self {
-        User {
+        Self {
             id: nanoid!(6),
             username: "Anonymous".to_string(),
         }
@@ -105,7 +105,7 @@ where
             .unwrap()
             .ok_or(AuthError)?;
 
-        let user = session.get::<User>("user").ok_or(AuthError)?;
+        let user = session.get::<Self>("user").ok_or(AuthError)?;
 
         Ok(user)
     }

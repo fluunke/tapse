@@ -8,34 +8,32 @@
   import { fade } from "svelte/transition";
 
   import { onMount } from "svelte";
-  import {
-    is_error,
-    is_files,
-    is_file_delete,
-    is_message,
-    is_room,
-  } from "./Models.svelte";
   import RoomBox from "./components/RoomBox.svelte";
   import ws from "./stores/ws";
-
   import { Session } from "./stores/session";
   import { Room, type RoomInterface } from "./stores/room";
-  import { TFile } from "./stores/file";
-  import { Message, type MessageInterface } from "./stores/message";
+  import { TFile, type TFileInterface } from "./stores/file";
+  import { Message } from "./stores/message";
+  import { writable, type Writable } from "svelte/store";
 
   let session = new Session();
   let room = new Room();
   let file = new TFile($room.current_room);
   let message = new Message($room.current_room);
 
+  let move_file_prompt: Writable<TFileInterface[]> = writable([]);
+
   // Fetch new data when changing room
-  $: message.fetch_messages($room.current_room).then((_) => {});
-  $: file.fetch_files($room.current_room).then((_) => {});
+  $: {
+    message.fetch_messages($room.current_room).then((_) => {});
+    file.fetch_files($room.current_room).then((_) => {});
+  }
 
   let new_username: string;
   let password: string;
 
   // Mount websocket connection
+  //TODO: Move this to a separate component
   onMount(async function () {
     ws.websocket_subscribe((socketMessage) => {
       let ws_msg: any = {};
@@ -48,36 +46,51 @@
         }
       }
 
-      if (is_error(ws_msg)) {
-        toast.push(ws_msg.error.message);
-      }
+      let event_kind = Object.keys(ws_msg)[0];
 
-      if (is_message(ws_msg)) {
-        let new_msg: MessageInterface = ws_msg.new_message;
-        if (new_msg.room == $room.current_room) {
-          message.add_message(new_msg);
-        } else {
-          room.increment_notifications(new_msg.room);
-        }
-      }
+      switch (event_kind) {
+        case "error":
+          toast.push(ws_msg.error.message);
+          break;
 
-      if (is_files(ws_msg)) {
-        let new_files: Array<TFile> = ws_msg.new_files;
-        if (new_files[0].room == $room.current_room) {
-          file.add_files(new_files);
-        } else {
-          room.increment_notifications(new_files[0].room);
-        }
-      }
+        case "incoming_message":
+          if (ws_msg.room == $room.current_room) {
+            message.add_message(ws_msg);
+          } else {
+            room.increment_notifications(ws_msg.room);
+          }
+          break;
 
-      if (is_file_delete(ws_msg)) {
-        let deleted_file: string = ws_msg.delete_file;
-        file.remove_file(deleted_file);
-      }
+        case "new_files":
+          let new_files: Array<TFile> = ws_msg.new_files;
+          if (new_files[0].room == $room.current_room) {
+            file.add_files(new_files);
+          } else {
+            room.increment_notifications(new_files[0].room);
+          }
+          break;
 
-      if (is_room(ws_msg)) {
-        let new_room: RoomInterface = ws_msg.new_room;
-        room.add_room(new_room);
+        case "files_moved":
+          let f = ws_msg.files_moved;
+          if (f.new_room == $room.current_room) {
+            file.add_files(f);
+          } else {
+            room.increment_notifications(f.new_room);
+          }
+          break;
+
+        case "files_deleted":
+          file.remove_files([ws_msg.files_deleted]);
+          break;
+
+        case "room_created":
+          let new_room: RoomInterface = ws_msg.room_created;
+          room.add_room(new_room);
+          break;
+
+        default:
+          console.log("Unhandled event:" + ws_msg.kind);
+          break;
       }
     });
   });
@@ -88,12 +101,12 @@
 <div
   class="w-full h-full py-2 my-8 bg-white shadow-lg md:h-auto lg:w-2/3 rounded-xl md:w-2/3 md:py-4 xl:w-2/4"
 >
-  <RoomBox room_store={room} />
+  <RoomBox {move_file_prompt} {file} room_store={room} />
   <div
     class="flex flex-col px-4 space-x-2 space-y-8 h-2/3 md:h-full md:flex-row lg:space-y-0"
   >
     <Chat message_store={message} {room} />
-    <Files {file} {room} />
+    <Files {move_file_prompt} {file} {room} />
   </div>
 </div>
 

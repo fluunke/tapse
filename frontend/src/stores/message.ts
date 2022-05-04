@@ -11,7 +11,7 @@ export type MessageStore = {
 export interface MessageInterface {
     id: number;
     author: string;
-    room: number;
+    room: string;
     content: string;
     creation_date: Date;
 }
@@ -19,29 +19,29 @@ export interface MessageInterface {
 export class Message implements MessageInterface {
     id: number;
     author: string;
-    room: number;
+    room: string;
     content: string;
     creation_date: Date;
 
     store: MessageStore;
 
-    constructor(room: number) {
+    constructor(room: string) {
         this.store = writable([]);
         this.fetch_messages(room);
     }
 
-    async fetch_messages(room: number) {
+    async fetch_messages(room: string) {
         const msgs = await fetch(`/api/chat?room=${room}`).then(res => res.json());
         this.store.set(msgs);
     }
 
-    async send_message(input: string, room: number) {
+    async send_message(input: string, room: string) {
         let message = {
             room: room,
             content: input,
         };
 
-        ws.send(message);
+        ws.send("new_message", message);
     }
 
     add_message(message: MessageInterface) {
@@ -52,7 +52,6 @@ export class Message implements MessageInterface {
         setTimeout(function () {
             msgs.scrollTo(0, msgs.scrollHeight);
         }, 200);
-
     }
 
     subscribe(run) {

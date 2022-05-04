@@ -15,14 +15,10 @@ pub enum TapseError {
     FileName,
     #[error("File is empty")]
     FileEmpty,
-    #[error("Message is too short")]
-    MessageTooShort,
-    #[error("Message is too long")]
-    MessageTooLong,
-    #[error("Room name is too short")]
-    RoomNameTooShort,
-    #[error("Room name is too long")]
-    RoomNameTooLong,
+    #[error("Message must be between 1 and 1024 characters long")]
+    MessageLength,
+    #[error("Room name must be between 3 and 20 characters long")]
+    RoomNameLength,
     #[error("Error while creating the room: {0}")]
     RoomCreationError(sqlx::Error),
     #[error("Invalid WebSocket message")]

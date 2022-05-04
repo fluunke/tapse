@@ -25,11 +25,6 @@
 <div id="messages" class="flex flex-col space-y-2 h-2/4 md:h-96 basis-1/2">
   <div class="m-2 text-lg font-bold text-center">Chat</div>
   <div id="msgs" class="h-full space-y-1 overflow-y-scroll">
-    {#if $store.length == 0}
-      <div class="font-bold text-center text-gray-400 pb-7 text-l">
-        No messages.
-      </div>
-    {/if}
     <ul
       class="children:(flex items-center justify-between p-2 transition group)"
     >
@@ -45,6 +40,10 @@
             {new Date(message.creation_date).toLocaleTimeString()}
           </div>
         </li>
+      {:else}
+        <div class="font-bold text-center text-gray-400 pb-7 text-l">
+          No messages.
+        </div>
       {/each}
     </ul>
   </div>

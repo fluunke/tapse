@@ -1,28 +1,28 @@
-use crate::{db::Room, errors::TapseError, Broadcaster, Database};
+use crate::{
+    db::{Room, RoomQuery},
+    errors::TapseError,
+    websocket::events::Response,
+    ClientChannel, Database,
+};
 use axum::{http::StatusCode, Extension, Json};
-use serde::{Deserialize, Serialize};
 
-use crate::websocket::WSEvent;
+use super::session::User;
 
-pub async fn list_rooms(db: Extension<Database>) -> Result<Json<Vec<Room>>, TapseError> {
+pub async fn list_rooms(db: Extension<Database>, _: User) -> Result<Json<Vec<Room>>, TapseError> {
     let rooms: Vec<Room> = Room::list(&db).await?;
 
     Ok(Json(rooms))
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct InsertRoom {
-    pub room: String,
-}
-
 pub async fn insert_room(
-    room: Json<InsertRoom>,
-    send: Extension<Broadcaster>,
+    room: Json<RoomQuery>,
+    send: Extension<ClientChannel>,
     pool: Extension<Database>,
+    _: User,
 ) -> Result<StatusCode, TapseError> {
-    let new_room = Room::add(&pool, &room.room).await?;
+    let new_room = Room::new(&pool, &room).await?;
 
-    send.send(&WSEvent::NewRoom(new_room.clone()))
+    send.send(&Response::RoomCreated(new_room.clone()))
         .await
         .unwrap();
 

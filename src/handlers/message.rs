@@ -3,8 +3,11 @@ use crate::errors::TapseError;
 use crate::Database;
 use axum::extract::Query;
 use axum::{Extension, Json};
+use serde::Deserialize;
 
-#[derive(serde::Deserialize)]
+use super::session::User;
+
+#[derive(Deserialize)]
 pub struct ListMessages {
     pub room: String,
     pub count: Option<i64>,
@@ -14,6 +17,7 @@ pub struct ListMessages {
 pub async fn list_messages(
     q: Query<ListMessages>,
     pool: Extension<Database>,
+    _: User,
 ) -> Result<Json<Vec<Message>>, TapseError> {
     let count = q.count.unwrap_or(20).clamp(1, 20);
 

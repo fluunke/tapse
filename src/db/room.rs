@@ -3,31 +3,23 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
-#[derive(Clone, Deserialize, Serialize, sqlx::FromRow, Debug)]
+#[derive(Deserialize, Serialize, sqlx::FromRow, Clone, Debug)]
 pub struct Room {
-    pub id: i64,
     pub name: String,
     pub creation_date: NaiveDateTime,
 }
 
 impl Room {
-    pub async fn add(pool: &SqlitePool, room: &str) -> Result<Room, TapseError> {
-        let room = room.trim();
-
-        // Handle too long/short room names
-        match room.len() {
-            n if n >= 20 => return Err(TapseError::RoomNameTooLong),
-            n if n <= 3 => return Err(TapseError::RoomNameTooShort),
-            _ => {}
-        }
+    pub async fn new(pool: &SqlitePool, room: &RoomQuery) -> Result<Self, TapseError> {
+        room.valid()?;
 
         match sqlx::query_as!(
             Room,
             r#"
             insert into rooms (name, creation_date)
-            values ($1, datetime('now')) returning id, name, creation_date
+            values ($1, datetime('now')) returning name, creation_date
         "#,
-            room
+            room.room
         )
         .fetch_one(pool)
         .await
@@ -37,13 +29,29 @@ impl Room {
         }
     }
 
-    pub async fn list(pool: &SqlitePool) -> Result<Vec<Room>, TapseError> {
+    pub async fn list(pool: &SqlitePool) -> Result<Vec<Self>, TapseError> {
         Ok(sqlx::query_as!(
             Room,
             r#"
-            select id, name, creation_date from rooms"#
+            select name, creation_date from rooms"#
         )
         .fetch_all(pool)
         .await?)
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct RoomQuery {
+    pub room: String,
+}
+
+impl RoomQuery {
+    pub fn valid(&self) -> Result<(), TapseError> {
+        let len = self.room.len();
+
+        if !(3..20).contains(&len) {
+            return Err(TapseError::RoomNameLength);
+        };
+        Ok(())
     }
 }

@@ -14,6 +14,7 @@ use handlers::{
 };
 
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use websocket::events::Response;
 
 use std::{
     net::{IpAddr, SocketAddr},
@@ -26,8 +27,6 @@ use tower_http::{
 };
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use websocket::WSEvent;
 
 use crate::handlers::file::{delete_file, view_file};
 
@@ -56,7 +55,7 @@ struct Opts {
 }
 
 pub const SESSION_COOKIE_NAME: &str = "TAPSE_SESSION";
-pub type Broadcaster = BroadcastChannel<WSEvent>;
+pub type ClientChannel = BroadcastChannel<Response>;
 pub type Database = Pool<Sqlite>;
 
 #[tokio::main]
@@ -73,7 +72,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .init();
 
     // Channel shared between state to send and receive websocket messages.
-    let broadcaster: Broadcaster = BroadcastChannel::new();
+    let client: ClientChannel = BroadcastChannel::new();
 
     let db_url = format!(
         "sqlite://{}?mode=rwc",
@@ -116,7 +115,7 @@ async fn main() -> Result<(), sqlx::Error> {
         )
         .layer(TraceLayer::new_for_http())
         .layer(Extension(server_state))
-        .layer(Extension(broadcaster))
+        .layer(Extension(client))
         .layer(Extension(db))
         .layer(Extension(store));
 

@@ -1,7 +1,7 @@
-use crate::db::{self, File, FileQuery};
+use crate::db::{self, File, FileQuery, RoomQuery};
 use crate::errors::TapseError;
-use crate::websocket::WSEvent;
-use crate::{Broadcaster, Database};
+use crate::websocket::events::Response;
+use crate::{ClientChannel, Database};
 use axum::extract::{Multipart, Path, Query};
 use axum::http::header::CONTENT_TYPE;
 use axum::http::{HeaderMap, StatusCode};
@@ -10,28 +10,27 @@ use axum::{Extension, Json};
 use mime_guess::Mime;
 use std::str::FromStr;
 
-#[derive(serde::Deserialize)]
-pub struct FileRoom {
-    pub room: String,
-}
+use super::session::User;
 
 pub async fn upload_file(
-    room: Query<FileRoom>,
-    broadcaster: Extension<Broadcaster>,
+    room: Query<RoomQuery>,
+    broadcaster: Extension<ClientChannel>,
     pool: Extension<Database>,
     files: Multipart,
+    _: User,
 ) -> Result<StatusCode, TapseError> {
-    let files = db::File::insert(files, &room.room, &pool).await?;
+    let files = db::File::insert(&pool, files, &room.room).await?;
 
-    broadcaster.send(&WSEvent::NewFiles(files)).await.unwrap();
+    broadcaster.send(&Response::NewFiles(files)).await.unwrap();
     Ok(StatusCode::OK)
 }
 
 pub async fn list_files(
-    room: Query<FileRoom>,
+    room: Query<RoomQuery>,
     pool: Extension<Database>,
+    _: User,
 ) -> Result<Json<Vec<File>>, TapseError> {
-    let files = db::File::list(&room.room, &pool).await?;
+    let files = db::File::list(&pool, &room.room).await?;
 
     Ok(Json(files))
 }
@@ -40,7 +39,7 @@ pub async fn view_file(
     Path(file): Path<FileQuery>,
     pool: Extension<Database>,
 ) -> Result<impl IntoResponse, TapseError> {
-    let (file, bytes) = db::File::get(file, &pool).await?;
+    let (file, bytes) = db::File::get(&pool, file).await?;
 
     let mut headers = HeaderMap::new();
 
@@ -62,16 +61,14 @@ fn get_mime(f: &File) -> Option<Mime> {
 }
 
 pub async fn delete_file(
-    file: Path<FileQuery>,
+    Path(files): Path<Vec<FileQuery>>,
     pool: Extension<Database>,
-    broadcaster: Extension<Broadcaster>,
+    client: Extension<ClientChannel>,
+    _: User,
 ) -> Result<StatusCode, TapseError> {
-    db::File::delete(&file, &pool).await?;
+    db::File::delete(&pool, &files).await?;
 
-    broadcaster
-        .send(&WSEvent::DeleteFile(file.id.clone()))
-        .await
-        .unwrap();
+    client.send(&Response::FilesDeleted(files)).await.unwrap();
 
     Ok(StatusCode::OK)
 }

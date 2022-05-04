@@ -9,3 +9,4 @@ pub use message::Message;
 pub use message::MessageQuery;
 
 pub use room::Room;
+pub use room::RoomQuery;
