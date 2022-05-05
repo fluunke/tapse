@@ -5,10 +5,10 @@ name = "tapse"
 version = "0.0.2"
 
 [dependencies]
-clap = { version = "3.1.12", features = ["derive"] }
+clap = { version = "3.1.15", features = ["derive"] }
 dotenv = "0.15.0"
 
-tokio = { version = "1.18.0", features = ["full"] }
+tokio = { version = "1.18.1", features = ["full"] }
 axum = { version = "0.5.4", features = ["headers", "multipart", "ws"] }
 axum-extra = { version = "0.3.0", features = ["cookie"] }
 tracing = "0.1.34"
