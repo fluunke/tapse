@@ -24,9 +24,10 @@
   let move_file_prompt: Writable<TFileInterface[]> = writable([]);
 
   // Fetch new data when changing room
+  $: changed_room = $room.current_room;
   $: {
-    message.fetch_messages($room.current_room).then((_) => {});
-    file.fetch_files($room.current_room).then((_) => {});
+    message.fetch_messages(changed_room).then((_) => {});
+    file.fetch_files(changed_room).then((_) => {});
   }
 
   let new_username: string;
