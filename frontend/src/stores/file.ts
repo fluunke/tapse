@@ -85,7 +85,6 @@ export class TFile implements TFileInterface {
 
 
     move_files(files: TFileInterface[], room: string) {
-
         // we only need id and name
         let id_name = files.map(f => {
             return {
@@ -98,7 +97,10 @@ export class TFile implements TFileInterface {
             move_files: id_name,
             new_room: room,
         };
+
         ws.send("move_files", file_move);
+        this.remove_files(files.map(f => f.id));
+
     }
 
     remove_files(file_ids: string[]) {
