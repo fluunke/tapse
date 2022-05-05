@@ -19,15 +19,17 @@ export class Room implements RoomInterface {
     unread_notifications?: number;
 
     store: RoomStore = writable({
-        current_room: "general",
+        current_room: "",
         rooms: [],
     });
 
     constructor() {
-        this.fetch_rooms();
+        this.update_rooms();
     }
 
     set_current_room(room: string) {
+        localStorage.setItem('last_room', room);
+
         this.store.update(store => ({ ...store, current_room: room }));
         this.reset_notifications(room);
     }
@@ -56,11 +58,19 @@ export class Room implements RoomInterface {
         });
     }
 
-    async fetch_rooms() {
+    async update_rooms() {
         const r = await fetch(`/api/rooms`);
         let json: RoomInterface[] = await r.json();
 
-        this.store.update(store => ({ ...store, rooms: json }));
+        let last_room;
+
+        if (!localStorage.getItem('last_room')) {
+            last_room = json[0].name;
+        } else {
+            last_room = localStorage.getItem('last_room');
+        }
+
+        this.store.update(store => ({ ...store, rooms: json, current_room: last_room }));
     }
 
     async create_room(name: string) {
