@@ -17,7 +17,7 @@
         {
           "name": "room",
           "ordinal": 2,
-          "type_info": "Int64"
+          "type_info": "Text"
         },
         {
           "name": "upload_date",
@@ -36,33 +36,18 @@
       ]
     }
   },
-  "153c518ffea975bd0b20f17a5b67af1795491af84aa4cf2a90d95f311b74b0d3": {
-    "query": "delete from files\n               where id = $1 and name = $2",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Right": 2
-      },
-      "nullable": []
-    }
-  },
-  "6e08be85b37f6f727b0fbc7499404ee8476b2ed130ebb89ec672acd0f62758ac": {
-    "query": "\n            insert into rooms (name, creation_date)\n            values ($1, datetime('now')) returning id, name, creation_date\n        ",
+  "71cef2a2087cd89076af7d9cbf548bd77f4420a0654a56c96a9b2e38cbe80fd2": {
+    "query": "\n            insert into rooms (name, creation_date)\n            values ($1, datetime('now')) returning name, creation_date\n        ",
     "describe": {
       "columns": [
         {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
           "name": "name",
-          "ordinal": 1,
+          "ordinal": 0,
           "type_info": "Text"
         },
         {
           "name": "creation_date",
-          "ordinal": 2,
+          "ordinal": 1,
           "type_info": "Datetime"
         }
       ],
@@ -70,7 +55,6 @@
         "Right": 1
       },
       "nullable": [
-        false,
         false,
         false
       ]
@@ -98,7 +82,7 @@
         {
           "name": "room",
           "ordinal": 3,
-          "type_info": "Int64"
+          "type_info": "Text"
         },
         {
           "name": "author",
@@ -113,6 +97,30 @@
         false,
         false,
         false,
+        false,
+        false
+      ]
+    }
+  },
+  "8929bcaf5bf61d71ac5f9a6ae869caad195ba9590a102e71f2c652dd0d4aa69a": {
+    "query": "\n            select name, creation_date from rooms",
+    "describe": {
+      "columns": [
+        {
+          "name": "name",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "creation_date",
+          "ordinal": 1,
+          "type_info": "Datetime"
+        }
+      ],
+      "parameters": {
+        "Right": 0
+      },
+      "nullable": [
         false,
         false
       ]
@@ -140,7 +148,7 @@
         {
           "name": "room",
           "ordinal": 3,
-          "type_info": "Int64"
+          "type_info": "Text"
         }
       ],
       "parameters": {
@@ -148,36 +156,6 @@
       },
       "nullable": [
         false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "e1aa4a867f14c309d72f6ee2ffd60e636c93f55fa15b721eaf9b18402683bb7f": {
-    "query": "\n            select id, name, creation_date from rooms",
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "creation_date",
-          "ordinal": 2,
-          "type_info": "Datetime"
-        }
-      ],
-      "parameters": {
-        "Right": 0
-      },
-      "nullable": [
         false,
         false,
         false
@@ -201,7 +179,7 @@
         {
           "name": "room",
           "ordinal": 2,
-          "type_info": "Int64"
+          "type_info": "Text"
         },
         {
           "name": "content",
@@ -226,6 +204,26 @@
       ]
     }
   },
+  "f0aea6f4ae721595972f38673587b4d8fa87115ee094a0d4b279dc3d630975cb": {
+    "query": "\n            update files\n            set room = $1\n            where id = $2\n            and name = $3\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 3
+      },
+      "nullable": []
+    }
+  },
+  "f21ea40bba0f55c0a5d93ee791ff3731baaeb74cc0f4693ba125f0db01ac038b": {
+    "query": "delete from files\n                where id = $1 and name = $2",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Right": 2
+      },
+      "nullable": []
+    }
+  },
   "f4a652b3f6ec9f131feb1b457301b0d5a3adc20b0bde5c023f2cc861dd460dfd": {
     "query": "select * from files\n               where id = $1 and name = $2",
     "describe": {
@@ -233,7 +231,7 @@
         {
           "name": "room",
           "ordinal": 0,
-          "type_info": "Int64"
+          "type_info": "Text"
         },
         {
           "name": "id",
