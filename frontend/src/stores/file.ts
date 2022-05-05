@@ -56,6 +56,8 @@ export class TFile implements TFileInterface {
 
         let ids = files.map(f => f.id);
         this.remove_files(ids);
+
+        toast.push(ids.length + " file(s) deleted");
     }
 
     toggle_selected(file: TFileInterface) {
@@ -100,6 +102,7 @@ export class TFile implements TFileInterface {
         };
 
         ws.send("move_files", file_move);
+        toast.push(id_name.length + " file(s) moved to " + room);
 
     }
 

@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
+import { toast } from '@zerodevx/svelte-toast';
 
 export type RoomStore = {
     subscribe: Writable<{ current_room: string, rooms: RoomInterface[] }>["subscribe"],
@@ -82,6 +83,7 @@ export class Room implements RoomInterface {
     }
 
     add_room(room: RoomInterface) {
+        toast.push("New room: " + room.name);
         this.store.update(store => ({ ...store, rooms: [...store.rooms, room] }));
     }
 
