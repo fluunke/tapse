@@ -1,14 +1,13 @@
 <script lang="ts">
+  import Login from "./components/Login.svelte";
+  import RoomBox from "./components/RoomBox.svelte";
   import Files from "./components/Files.svelte";
   import Chat from "./components/Chat.svelte";
   import Footer from "./components/Footer.svelte";
 
   import { SvelteToast, toast } from "@zerodevx/svelte-toast";
 
-  import { fade } from "svelte/transition";
-
   import { onMount } from "svelte";
-  import RoomBox from "./components/RoomBox.svelte";
   import ws from "./stores/ws";
   import { Session } from "./stores/session";
   import { Room, type RoomInterface } from "./stores/room";
@@ -29,9 +28,6 @@
     message.fetch_messages(changed_room).then((_) => {});
     file.fetch_files(changed_room).then((_) => {});
   }
-
-  let new_username: string;
-  let password: string;
 
   // Mount websocket connection
   //TODO: Move this to a separate component
@@ -105,44 +101,17 @@
 <div
   class="w-full h-full py-2 my-8 bg-white shadow-lg md:h-auto lg:w-2/3 rounded-xl md:w-2/3 md:py-4 xl:w-2/4"
 >
-  <RoomBox {move_file_prompt} {file} room_store={room} />
-  <div
-    class="flex flex-col px-4 space-x-2 space-y-8 h-2/3 md:h-full md:flex-row lg:space-y-0"
-  >
-    <Chat message_store={message} {room} />
-    <Files {move_file_prompt} {file} {room} />
-  </div>
-</div>
-
-{#if $session}
-  <div
-    transition:fade
-    class="absolute top-0 left-0 flex items-center justify-center w-full h-full bg-gray-200"
-  >
-    <div class="flex flex-col p-8 bg-white border rounded-lg shadow-2xl">
-      <div class="flex flex-col flex-nowrap">
-        <div class="mb-4 text-lg font-bold text-center">Tapse login</div>
-        <input
-          class="p-2 border rounded-t-lg"
-          placeholder="Username"
-          required
-          bind:value={new_username}
-          type="text"
-        /><input
-          class="p-2 border"
-          placeholder="Access code (if required)"
-          bind:value={password}
-          type="text"
-        />
-      </div>
-      <button
-        class="p-2 font-bold text-white transition-all bg-blue-400 rounded-b-lg hover:bg-blue-500 hover:shadow-lg"
-        on:click={() => {
-          session.set_session(new_username, password);
-        }}>Log in</button
-      >
+  {#if $session}
+    <Login {session} />
+  {:else}
+    <RoomBox {move_file_prompt} {file} room_store={room} />
+    <div
+      class="flex flex-col px-4 space-x-2 space-y-8 h-2/3 md:h-full md:flex-row lg:space-y-0"
+    >
+      <Chat message_store={message} {room} />
+      <Files {move_file_prompt} {file} {room} />
     </div>
-  </div>
-{/if}
+  {/if}
+</div>
 
 <Footer />
