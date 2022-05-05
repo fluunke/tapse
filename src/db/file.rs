@@ -1,4 +1,4 @@
-use crate::{errors::TapseError, websocket::events::FileMove};
+use crate::{errors::TapseError, websocket::events::FileMoveRequest};
 use axum::extract::Multipart;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,7 @@ impl File {
             let id = nanoid::nanoid!(7);
 
             let filename = match field.file_name() {
-                Some(a) => urlencoding::encode(a).into_owned(),
+                Some(a) => a.to_owned(),
                 None => return Err(TapseError::FileName),
             };
 
@@ -102,25 +102,34 @@ impl File {
         Ok((file, q.file))
     }
 
-    pub async fn move_files(pool: &SqlitePool, files: &FileMove) -> Result<(), TapseError> {
+    pub async fn move_files(
+        pool: &SqlitePool,
+        files: &FileMoveRequest,
+    ) -> Result<Vec<File>, TapseError> {
+        let mut moved_files = vec![];
+
         // yes, this could probably be done in one query
         for file in &files.move_files {
-            sqlx::query!(
+            let f = sqlx::query_as!(
+                File,
                 r#"
             update files
             set room = $1
             where id = $2
             and name = $3
+            returning id, name, upload_date, room
         "#,
                 files.new_room,
                 file.id,
                 file.name
             )
-            .execute(pool)
+            .fetch_one(pool)
             .await?;
+
+            moved_files.push(f);
         }
 
-        Ok(())
+        Ok(moved_files)
     }
 
     pub(crate) async fn delete(

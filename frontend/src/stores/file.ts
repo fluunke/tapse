@@ -1,6 +1,7 @@
 import { writable, get, type Subscriber } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import ws from './ws';
+import { toast } from '@zerodevx/svelte-toast';
 
 export interface TFileInterface {
     id: string;
@@ -99,7 +100,6 @@ export class TFile implements TFileInterface {
         };
 
         ws.send("move_files", file_move);
-        this.remove_files(files.map(f => f.id));
 
     }
 

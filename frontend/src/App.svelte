@@ -74,8 +74,10 @@
 
         case "files_moved":
           let f = ws_msg.files_moved;
+          file.remove_files(f.move_files.map((f) => f.id));
+
           if (f.new_room == $room.current_room) {
-            file.add_files(f);
+            file.add_files(f.move_files);
           } else {
             room.increment_notifications(f.new_room);
           }

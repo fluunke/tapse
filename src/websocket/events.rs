@@ -17,7 +17,7 @@ use crate::{
 pub enum Request {
     NewMessage(MessageQuery),
     CreateRoom(RoomQuery),
-    MoveFiles(FileMove),
+    MoveFiles(FileMoveRequest),
     DeleteFiles(Vec<FileQuery>),
 }
 
@@ -50,6 +50,12 @@ pub struct WSError {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileMove {
+    pub move_files: Vec<File>,
+    pub new_room: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct FileMoveRequest {
     pub move_files: Vec<FileQuery>,
     pub new_room: String,
 }
@@ -79,7 +85,10 @@ impl Request {
                 Err(e) => Response::error(&user.id, &e),
             },
             Self::MoveFiles(files) => match File::move_files(pool, &files).await {
-                Ok(_) => Response::FilesMoved(files),
+                Ok(moved_files) => Response::FilesMoved(FileMove {
+                    move_files: moved_files,
+                    new_room: files.new_room,
+                }),
                 Err(e) => Response::error(&user.id, &e),
             },
             Self::DeleteFiles(files) => match File::delete(pool, &files).await {

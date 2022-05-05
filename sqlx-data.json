@@ -36,6 +36,42 @@
       ]
     }
   },
+  "110a7a51141b6c41d5255b5b4276591cb241cc6d14f0e66463d9d2e0f35b2ce0": {
+    "query": "\n            update files\n            set room = $1\n            where id = $2\n            and name = $3\n            returning id, name, upload_date, room\n        ",
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "upload_date",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        },
+        {
+          "name": "room",
+          "ordinal": 3,
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Right": 3
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "71cef2a2087cd89076af7d9cbf548bd77f4420a0654a56c96a9b2e38cbe80fd2": {
     "query": "\n            insert into rooms (name, creation_date)\n            values ($1, datetime('now')) returning name, creation_date\n        ",
     "describe": {
@@ -202,16 +238,6 @@
         false,
         false
       ]
-    }
-  },
-  "f0aea6f4ae721595972f38673587b4d8fa87115ee094a0d4b279dc3d630975cb": {
-    "query": "\n            update files\n            set room = $1\n            where id = $2\n            and name = $3\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Right": 3
-      },
-      "nullable": []
     }
   },
   "f21ea40bba0f55c0a5d93ee791ff3731baaeb74cc0f4693ba125f0db01ac038b": {
