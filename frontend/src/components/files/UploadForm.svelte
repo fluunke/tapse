@@ -6,7 +6,7 @@
 </script>
 
 <form
-  class="flex items-center justify-center h-12"
+  class="flex items-center justify-between h-12"
   id="fileUpload"
   name="fileUpload"
 >

@@ -8,9 +8,8 @@
 </script>
 
 <div transition:fade class="flex items-center justify-center w-full h-full">
-  <div class="flex flex-col p-8">
-    <div class="flex flex-col flex-nowrap">
-      <div class="mb-4 text-lg font-bold text-center">Login</div>
+  <div class="flex flex-col py-16">
+    <div class="flex flex-col flex-nowrap ">
       <input
         class="p-2 border rounded-t-lg"
         placeholder="Name"

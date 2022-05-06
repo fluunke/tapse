@@ -54,7 +54,25 @@ pub async fn set_username(
 }
 
 pub async fn get_username(user: User) -> impl IntoResponse {
-    Json(user.username)
+    user.username
+}
+
+pub async fn change_username(
+    old_user: User,
+    Extension(store): Extension<MemoryStore>,
+    cookie: SessionCookie,
+    Json(new_user): Json<NewUser>,
+) -> Result<String, TapseError> {
+    let mut session = session_from_cookie(cookie.0, store).await?;
+
+    let new_user = User {
+        id: old_user.id,
+        username: new_user.username,
+    };
+
+    session.insert("user", &new_user).unwrap();
+
+    Ok(new_user.username)
 }
 
 pub struct AuthError;
@@ -63,6 +81,11 @@ impl IntoResponse for AuthError {
     fn into_response(self) -> Response {
         StatusCode::UNAUTHORIZED.into_response()
     }
+}
+
+#[derive(Deserialize)]
+pub struct NewUser {
+    pub username: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -77,6 +100,28 @@ impl Default for User {
             id: nanoid!(6),
             username: "Anonymous".to_string(),
         }
+    }
+}
+
+pub struct SessionCookie(pub String);
+
+#[async_trait]
+impl<B> FromRequest<B> for SessionCookie
+where
+    B: Send,
+{
+    type Rejection = TapseError;
+
+    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
+        let cookies = CookieJar::from_request(req).await.unwrap();
+
+        let session_cookie = cookies
+            .get(SESSION_COOKIE_NAME)
+            .ok_or(TapseError::SessionNotFound)?
+            .value()
+            .to_string();
+
+        Ok(SessionCookie(session_cookie))
     }
 }
 
@@ -99,14 +144,23 @@ where
             .value()
             .to_string();
 
-        let session = store
-            .load_session(session_cookie)
+        let session = session_from_cookie(session_cookie, store)
             .await
-            .unwrap()
+            .ok()
             .ok_or(AuthError)?;
 
         let user = session.get::<Self>("user").ok_or(AuthError)?;
 
         Ok(user)
     }
+}
+
+async fn session_from_cookie(cookie: String, store: MemoryStore) -> Result<Session, TapseError> {
+    let session = store
+        .load_session(cookie)
+        .await
+        .unwrap()
+        .ok_or(TapseError::WrongPassword);
+
+    session
 }

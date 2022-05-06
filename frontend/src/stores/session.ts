@@ -1,11 +1,15 @@
-import { writable, type Writable } from "svelte/store";
+import { writable } from "svelte/store";
 
 export class Session {
 
-    login_modal: Writable<boolean>;
+    store = writable({
+        login_modal: false,
+        username: "",
+        id: "",
+    });
+
 
     constructor() {
-        this.login_modal = writable(false);
         this.get_session();
     }
 
@@ -14,7 +18,10 @@ export class Session {
         let status = await res.status;
 
         if (status == 401) {
-            this.login_modal.set(true)
+            this.store.update(store => ({ ...store, login_modal: true }));
+        } else {
+            let name = await res.text();
+            this.store.update(store => ({ ...store, username: name }));
         }
     };
 
@@ -39,8 +46,32 @@ export class Session {
 
     }
 
+    async update_username(new_name: string) {
+        let res = await fetch(`/api/session`, {
+            body: JSON.stringify({
+                username: new_name,
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            method: "PUT",
+            credentials: "include",
+        });
+
+        let status = await res.status;
+
+        if (status == 200) {
+            // I'd really love to skip this one day
+            //TODO: Does svelte-websocket-store allow reconnecting?
+            window.location.reload();
+            // this.store.update(store => ({ ...store, username: new_name }));
+            // toast.push("Username updated");
+        }
+
+    }
+
     subscribe(run) {
-        return this.login_modal.subscribe(run);
+        return this.store.subscribe(run);
     }
 
 }

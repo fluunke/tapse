@@ -4,6 +4,8 @@
   import Files from "./components/Files.svelte";
   import Chat from "./components/Chat.svelte";
   import Footer from "./components/Footer.svelte";
+  import Settings from "./components/settings/Settings.svelte";
+  import SettingsButton from "./components/settings/SettingsButton.svelte";
 
   import { SvelteToast, toast } from "@zerodevx/svelte-toast";
 
@@ -21,6 +23,7 @@
   let message = new Message($room.current_room);
 
   let move_file_prompt: Writable<TFileInterface[]> = writable([]);
+  let settings_menu_open = writable(false);
 
   // Fetch new data when changing room
   $: changed_room = $room.current_room;
@@ -99,15 +102,18 @@
 <SvelteToast />
 
 <div
-  class="w-full h-full py-2 my-8 bg-white shadow-lg md:h-auto lg:w-2/3 rounded-xl md:w-2/3 md:py-4 xl:w-2/4"
+  class="w-full h-full relative p-4 bg-white shadow-lg md:h-auto lg:w-2/3 rounded-xl md:w-2/3 xl:w-2/4"
 >
-  {#if $session}
+  {#if $session.login_modal}
     <Login {session} />
   {:else}
     <RoomBox {move_file_prompt} {file} room_store={room} />
-    <div
-      class="flex flex-col px-4 space-x-2 space-y-8 h-2/3 md:h-full md:flex-row lg:space-y-0"
-    >
+
+    <SettingsButton {settings_menu_open} />
+    <div class="relative flex flex-col mt-4 md:flex-row">
+      {#if $settings_menu_open}
+        <Settings {session} />
+      {/if}
       <Chat message_store={message} {room} />
       <Files {move_file_prompt} {file} {room} />
     </div>

@@ -28,7 +28,10 @@ use tower_http::{
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::handlers::file::{delete_file, view_file};
+use crate::handlers::{
+    file::{delete_file, view_file},
+    session::change_username,
+};
 
 #[derive(Clone)]
 pub struct Server {
@@ -100,7 +103,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .nest(
             "/api",
             Router::new()
-                .route("/session", get(get_username).post(set_username))
+                .route(
+                    "/session",
+                    get(get_username).post(set_username).put(change_username),
+                )
                 .route("/rooms", get(list_rooms).post(insert_room))
                 .route("/chat", get(list_messages))
                 .route("/files", get(list_files).post(upload_file))
