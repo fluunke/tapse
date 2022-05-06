@@ -13,7 +13,7 @@ impl Room {
     pub async fn new(pool: &SqlitePool, room: &RoomQuery) -> Result<Self, TapseError> {
         room.valid()?;
 
-        match sqlx::query_as!(
+        Ok(sqlx::query_as!(
             Room,
             r#"
             insert into rooms (name, creation_date)
@@ -22,11 +22,7 @@ impl Room {
             room.room
         )
         .fetch_one(pool)
-        .await
-        {
-            Ok(room) => Ok(room),
-            Err(e) => Err(TapseError::RoomCreationError(e)),
-        }
+        .await?)
     }
 
     pub async fn list(pool: &SqlitePool) -> Result<Vec<Self>, TapseError> {

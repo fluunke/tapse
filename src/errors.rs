@@ -4,6 +4,7 @@ use axum::{
 };
 
 use thiserror::Error;
+use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum TapseError {
@@ -19,18 +20,38 @@ pub enum TapseError {
     MessageLength,
     #[error("Room name must be between 3 and 20 characters long")]
     RoomNameLength,
-    #[error("Error while creating the room: {0}")]
-    RoomCreationError(sqlx::Error),
     #[error("Invalid WebSocket message")]
     InvalidQuery,
     #[error("Wrong password")]
     WrongPassword,
     #[error("Database error. If this problem persists, contact the administrator.\nError: {0}")]
     DatabaseError(#[from] sqlx::Error),
+    #[error("Session not found.")]
+    SessionNotFound,
 }
 
 impl IntoResponse for TapseError {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+        let res = match self {
+            Self::WrongPassword | Self::SessionNotFound => (StatusCode::UNAUTHORIZED, self),
+
+            Self::NoMessages | Self::NoFiles => (StatusCode::NO_CONTENT, self),
+
+            Self::FileName
+            | Self::FileEmpty
+            | Self::InvalidQuery
+            | Self::MessageLength
+            | Self::RoomNameLength => (StatusCode::BAD_REQUEST, self),
+
+            Self::DatabaseError(e) => {
+                error!("{}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    TapseError::DatabaseError(e),
+                )
+            }
+        };
+
+        res.into_response()
     }
 }
