@@ -2,6 +2,11 @@
 
 Early alpha! Stuff's broken!
 
+
+## Demo
+
+![Tapse Demo](https://raw.githubusercontent.com/fluunke/tapse/master/assets/tapse.gif)
+
 ## Features
 
 * Realtime chat and file sharing with multiple rooms
